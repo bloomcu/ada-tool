@@ -3,8 +3,13 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use DDD\Http\Scans\ScanController;
+use DDD\Http\Scans\StatusController;
+use DDD\Http\Scans\DataSetController;
 
 // Scans
 Route::prefix('scans')->group(function() {
-    Route::post('/', [ScanController::class, 'store']);
+    Route::get('/', [ScanController::class, 'store']);
+    Route::get('/status', [StatusController::class, 'status']);
+    Route::get('/dataset', [DataSetController::class, 'dataset']);
+   
 });
