@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             SitesSeeder::class,
             TagsSeeder::class,
             StatusesSeeder::class,
+            PageSeeder::class
         ]);
     }
 }
