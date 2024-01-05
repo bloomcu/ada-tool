@@ -171,6 +171,7 @@ return [
         /*
          * Application Service Providers...
          */
+        DDD\App\Providers\ApifyServiceProvider::class,
         DDD\App\Providers\AppServiceProvider::class,
         DDD\App\Providers\AuthServiceProvider::class,
         DDD\App\Providers\BroadcastServiceProvider::class,
