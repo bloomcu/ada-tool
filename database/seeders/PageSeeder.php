@@ -24,7 +24,7 @@ class PageSeeder extends Seeder
                 'site_id'=>1,
                 'run_id'=>'xxx',
                 'queue_id'=>'xxx',
-                'results_id'=>'xxx'
+                'dataset_id'=>'xxx'
             ]
         );
         $eval_id = $evaluation->id;

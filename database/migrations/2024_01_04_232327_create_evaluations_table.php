@@ -18,7 +18,8 @@ return new class extends Migration
             $table->foreignId('site_id');
             $table->string('run_id');
             $table->string('queue_id');
-            $table->string('results_id');
+            $table->string('dataset_id');
+            $table->boolean('is_complete')->default(false);
             $table->timestamps();
 
             // Foreign constraints
