@@ -6,12 +6,13 @@ use Illuminate\Http\Request;
 use DDD\Domain\Base\Organizations\Organization;
 use DDD\App\Services\Apify\ApifyInterface;
 use DDD\App\Controllers\Controller;
+use DDD\Domain\Base\Evaluations\Evaluation;
 
 class AbortRunController extends Controller
 {
-    public function abortRun(Request $request, ApifyInterface $service)
+    public function abortRun(Request $request, ApifyInterface $service, Evaluation $evaluation)
     {
-        $actor = $service->abortRun($request->run_id);
+        $actor = $service->abortRun($evaluation->run_id);
 
         // $scan = $organization->scans()->create([
         //     'url'        => $request->url,

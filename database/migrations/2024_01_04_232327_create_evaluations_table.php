@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('run_id');
             $table->string('queue_id');
             $table->string('dataset_id');
-            $table->boolean('is_complete')->default(false);
+            $table->string('status')->default('READY');
             $table->timestamps();
 
             // Foreign constraints

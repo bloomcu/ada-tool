@@ -10,8 +10,7 @@ use DDD\Http\Scans\DataSetController;
 // Scans
 Route::prefix('scans')->group(function() {
     Route::get('/', [ScanController::class, 'store']);
-    Route::get('/status', [StatusController::class, 'status']);
+    Route::get('/status/{evaluation}', [StatusController::class, 'status']);
     Route::get('/dataset', [DataSetController::class, 'dataset']);
-    Route::get('/abortrun', [AbortRunController::class, 'abortRun']);
-   
+    Route::get('/abortrun/{evaluation}', [AbortRunController::class, 'abortRun']);
 });
