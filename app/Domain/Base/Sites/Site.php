@@ -10,6 +10,7 @@ use DDD\Domain\Base\Sites\Casts\LaunchInfo;
 
 // Traits
 use DDD\App\Traits\BelongsToOrganization;
+use DDD\Domain\Base\Evaluations\Evaluation;
 
 class Site extends Model
 {
@@ -24,4 +25,8 @@ class Site extends Model
     protected $casts = [
         'launch_info' => LaunchInfo::class,
     ];
+
+    public function evaluations() {
+        return $this->hasMany(Evaluation::class);
+    }
 }
