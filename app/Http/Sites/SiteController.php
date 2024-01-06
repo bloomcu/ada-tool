@@ -1,28 +1,19 @@
 <?php
 
-namespace DDD\Http\Base\Sites;
+namespace DDD\Http\Sites;
 
-use Illuminate\Http\Request;
-use DDD\App\Controllers\Controller;
-
-// Models
-use DDD\Domain\Base\Organizations\Organization;
-use DDD\Domain\Base\Sites\Site;
-
-// Services
+use DDD\Domain\Sites\Site;
+use DDD\Domain\Sites\Resources\SiteResource;
+use DDD\Domain\Sites\Requests\SiteUpdateRequest;
+use DDD\Domain\Sites\Requests\SiteStoreRequest;
+use DDD\Domain\Organizations\Organization;
 use DDD\App\Helpers\UrlHelpers;
-
-// Requests
-use DDD\Domain\Base\Sites\Requests\SiteStoreRequest;
-use DDD\Domain\Base\Sites\Requests\SiteUpdateRequest;
-
-// Resources
-use DDD\Domain\Base\Sites\Resources\SiteResource;
+use DDD\App\Controllers\Controller;
 
 class SiteController extends Controller
 {
     public function index(Organization $organization)
-    {
+    {   
         return SiteResource::collection($organization->sites);
     }
 

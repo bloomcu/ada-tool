@@ -1,10 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use DDD\Domain\Base\Pages\Page;
+use DDD\Domain\Pages\Page;
 use Illuminate\Support\Facades\Storage;
-use DDD\Domain\Base\Evaluations\Evaluation;
-use DDD\Domain\Base\Sites\Site;
+use DDD\Domain\Evaluations\Evaluation;
+use DDD\Domain\Sites\Site;
 
 /*
 |--------------------------------------------------------------------------

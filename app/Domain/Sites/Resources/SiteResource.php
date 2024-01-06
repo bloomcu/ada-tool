@@ -1,6 +1,6 @@
 <?php
 
-namespace DDD\Domain\Base\Sites\Resources;
+namespace DDD\Domain\Sites\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -21,7 +21,6 @@ class SiteResource extends JsonResource
             'url' => $this->url,
             'domain' => $this->domain,
             'scheme' => $this->scheme,
-            'launch_info' => $this->launch_info,
         ];
     }
 }

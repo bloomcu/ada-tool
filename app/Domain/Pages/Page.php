@@ -1,22 +1,28 @@
 <?php
 
-namespace DDD\Domain\Base\Pages;
+namespace DDD\Domain\Pages;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use DDD\Domain\Sites\Site;
+use DDD\Domain\Evaluations\Evaluation;
 
 class Page extends Model
 {
     use HasFactory;
-    protected $fillable = [
-        'title',
-        'results',
-        'evaluation_id'
+
+    protected $guarded = [
+        'id',
     ];
+
+    public function site()
+    {
+        return $this->belongsTo(Site::class);
+    }
     
     public function evaluation () {
-        return $this->belongsTo(\DDD\Domain\Base\Evaluations\Evaluation::class);
+        return $this->belongsTo(Evaluation::class);
     }
 
     protected function results(): Attribute
