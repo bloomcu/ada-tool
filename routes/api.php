@@ -27,5 +27,18 @@ Route::middleware('auth:sanctum')->group(function() {
             Route::put('/{site}', [SiteController::class, 'update']);
             Route::delete('/{site}', [SiteController::class, 'destroy']);
         });
+
+        // Scans
+        Route::prefix('scans')->group(function() {
+            Route::get('/', [ScanController::class, 'index']);
+            Route::post('/', [ScanController::class, 'store']);
+            Route::get('/{scan}', [ScanController::class, 'show']);
+
+            // Active scans
+            Route::get('/status/{scan}', [StatusController::class, 'status']); // Check status on Apify
+            Route::get('/dataset/{scan}', [DataSetController::class, 'dataset']); // Get dataset from Apify
+            Route::get('/abortrun/{scan}', [AbortRunController::class, 'abortRun']); // Abort run on Apify
+        });
+
     });
 });

@@ -3,38 +3,42 @@
 namespace DDD\Http\Scans;
 
 use Illuminate\Http\Request;
+use DDD\Domain\Scans\Resources\ScanResource;
+use DDD\Domain\Scans\Scan;
 use DDD\Domain\Organizations\Organization;
+use DDD\App\Services\Url\UrlService;
 use DDD\App\Services\Apify\ApifyInterface;
 use DDD\App\Controllers\Controller;
-use DDD\Domain\Evaluations\Evaluation;
 
 class ScanController extends Controller
 {
-    public function store(Request $request, ApifyInterface $service, Evaluation $evaluation)
+    public function index(Organization $organization)
     {
-        $evaluation->site_id = 1;
-        $actor = $service->runActor($request->url);
+        $scans = $organization->scans()->latest()->get();
 
-        // $scan = $organization->scans()->create([
-        //     'url'        => $request->url,
-        //     'run_id'     => $actor['run_id'],
-        //     'queue_id'   => $actor['queue_id'],
-        //     'dataset_id' => $actor['dataset_id'],
-        // ]);
-        $evaluation->run_id = $actor['run_id'];
-        $evaluation->queue_id = $actor['queue_id'];
-        $evaluation->dataset_id = $actor['dataset_id'];
+        return ScanResource::collection($scans);
+    }
+
+    public function store(Organization $organization, Request $request, UrlService $urlService, ApifyInterface $apifyService)
+    {
+        $domain = $urlService->getDomain($request->domain);
         
-        if($evaluation->save()) {
-            return response()->json([
-                'message' => 'Scan in progress',
-                // 'data' => $scan
-                'data' => [
-                    'evaluation'    =>$evaluation,
-                    'actor'         =>$actor
-                ]
-            ]);
-        }
-        return false;
+        $actor = $apifyService->runActor('https://' . $domain);
+
+        $site = $organization->sites()->firstOrCreate(['domain' => $domain]);
+
+        $scan = $organization->scans()->create([
+            'site_id'    => $site->id,
+            'run_id'     => $actor['run_id'],
+            'queue_id'   => $actor['queue_id'],
+            'dataset_id' => $actor['dataset_id'],
+        ]);
+
+        return new ScanResource($scan);
+    }
+
+    public function show(Organization $organization, Scan $scan)
+    {
+        return new ScanResource($scan);
     }
 }
