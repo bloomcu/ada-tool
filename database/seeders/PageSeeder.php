@@ -4,9 +4,9 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use DDD\Domain\Base\Pages\Page;
+use DDD\Domain\Pages\Page;
 use Illuminate\Support\Facades\Storage;
-use DDD\Domain\Base\Evaluations\Evaluation;
+use DDD\Domain\Evaluations\Evaluation;
 
 class PageSeeder extends Seeder
 {
@@ -28,7 +28,7 @@ class PageSeeder extends Seeder
             ]
         );
         $eval_id = $evaluation->id;
-        $data = json_decode($json = Storage::disk('private')->get('sample-eval.json'), true);
+
         // print_r($data);
         foreach ($data as $entry) {
             $page = Page::create(
