@@ -18,9 +18,8 @@ class SiteResource extends JsonResource
             'id' => $this->id,
             'organization_id' => $this->organization_id,
             'title' => $this->title,
-            'url' => $this->url,
             'domain' => $this->domain,
-            'scheme' => $this->scheme,
+            'scans' => $this->scans,
         ];
     }
 }
