@@ -69,6 +69,8 @@ class UrlService
      */
     public static function getDomain($url)
     {
+        $url = self::getClean($url);
+        
         // Extract the domain
         if (isset(parse_url($url)['host'])) {
             if (preg_match('/(?P<domain>[a-z0-9][a-z0-9\-]{1,63}\.[a-z\.]{2,6})$/i', parse_url($url)['host'], $regs)) {
@@ -82,7 +84,7 @@ class UrlService
         }
 
         // No domain in $url
-        return '';
+        return $url;
     }
 
     /*
