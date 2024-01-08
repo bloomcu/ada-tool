@@ -21,6 +21,7 @@ class ScanResource extends JsonResource
             'queue_id' => $this->queue_id,
             'dataset_id' => $this->dataset_id,
             'status' => $this->status,
+            'pages' => $this->pages,
             'created_at' => $this->created_at,
         ];
     }
