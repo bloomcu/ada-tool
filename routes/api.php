@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
+use DDD\Http\Sites\SiteScanController;
 use DDD\Http\Sites\SiteController;
 use DDD\Http\Scans\StatusController;
 use DDD\Http\Scans\ScanController;
@@ -26,12 +27,14 @@ Route::middleware('auth:sanctum')->group(function() {
             Route::get('/{site}', [SiteController::class, 'show']);
             Route::put('/{site}', [SiteController::class, 'update']);
             Route::delete('/{site}', [SiteController::class, 'destroy']);
+
+            // Scan site
+            Route::post('/{site}/scan', [SiteScanController::class, 'store']);
         });
 
         // Scans
         Route::prefix('scans')->group(function() {
             Route::get('/', [ScanController::class, 'index']);
-            Route::post('/', [ScanController::class, 'store']);
             Route::get('/{scan}', [ScanController::class, 'show']);
 
             // Active scans
