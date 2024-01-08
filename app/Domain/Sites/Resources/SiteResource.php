@@ -3,6 +3,7 @@
 namespace DDD\Domain\Sites\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
+use DDD\Domain\Scans\Resources\ScanResource;
 
 class SiteResource extends JsonResource
 {
@@ -19,7 +20,7 @@ class SiteResource extends JsonResource
             'organization_id' => $this->organization_id,
             'title' => $this->title,
             'domain' => $this->domain,
-            'scans' => $this->scans,
+            'scans' => ScanResource::collection($this->scans),
         ];
     }
 }
