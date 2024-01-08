@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 use DDD\Http\Sites\SiteScanController;
 use DDD\Http\Sites\SiteController;
 use DDD\Http\Scans\StatusController;
+use DDD\Http\Scans\ScanImportController;
 use DDD\Http\Scans\ScanController;
 use DDD\Http\Scans\DataSetController;
 use DDD\Http\Scans\AbortRunController;
@@ -41,6 +42,7 @@ Route::middleware('auth:sanctum')->group(function() {
             Route::get('/{scan}/status', [StatusController::class, 'show']); // Check status on Apify
             Route::get('/{scan}/dataset', [DataSetController::class, 'dataset']); // Get dataset from Apify
             Route::get('/{scan}/abort', [AbortRunController::class, 'abortRun']); // Abort run on Apify
+            Route::get('/{scan}/import', [ScanImportController::class, 'import']); // Abort run on Apify
         });
 
     });
