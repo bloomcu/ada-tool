@@ -36,7 +36,7 @@
                 
                 <tbody class="table__body">
                   @foreach($site as $test)
-                    @foreach($test->evaluations[0]->pages as $page)
+                    @foreach($test->scans[0]->pages as $page)
                     <tr class="table__row">
                       <td class="table__cell" role="cell">
                         <span class="table__label" aria-hidden="true">Name:</span> {{$page->title}}

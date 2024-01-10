@@ -1,10 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use DDD\Domain\Pages\Page;
-use Illuminate\Support\Facades\Storage;
-use DDD\Domain\Evaluations\Evaluation;
 use DDD\Domain\Sites\Site;
+use DDD\Domain\Scans\Scan;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,11 +16,11 @@ use DDD\Domain\Sites\Site;
 */
 
 Route::get('/', function () {
-    $evaluations = Evaluation::all();
-    foreach($evaluations as $evaluation) {
-        echo $evaluation->id . '<br>';
+    $scans = Scan::all();
+    foreach($scans as $scan) {
+        echo $scan->id . '<br>';
     }
-    $site = Site::find(1)->with('evaluations.pages')->get();
+    $site = Site::find(1)->with('scans.pages')->get();
     // print_r($site);
     return view('welcome', compact('site'));
 });
