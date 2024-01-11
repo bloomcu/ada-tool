@@ -14,11 +14,13 @@ return new class extends Migration
     public function up()
     {
         Schema::table('scans', function (Blueprint $table) {
-            $table->integer('pass_count')->nullable();
-            $table->integer('fail_count')->nullable();
+            
+            $table->integer('violation_count')->nullable();
             $table->integer('warning_count')->nullable();
-            $table->integer('manual_count')->nullable();
-            $table->integer('hidden_count')->nullable();
+            
+            $table->integer('violation_count_pages')->nullable();
+            $table->integer('warning_count_pages')->nullable();
+
         });
     }
 
@@ -31,11 +33,12 @@ return new class extends Migration
     {
         Schema::table('scans', function (Blueprint $table) {
             //
-            $table->dropColumn('pass_count');
-            $table->dropColumn('fail_count');
+            
+            $table->dropColumn('violation_count');
             $table->dropColumn('warning_count');
-            $table->dropColumn('manual_count');
-            $table->dropColumn('hidden_count');
+        
+            $table->dropColumn('violation_count_pages');
+            $table->dropColumn('warning_count_pages');
         });
     }
 };
