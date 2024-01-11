@@ -17,42 +17,47 @@ class ScanImportController extends Controller
         
         $dataset = json_decode($dataset, true);
         // These numbers include all elements and all tests these are not unique and may be useful in tracking global issues 
-        $passes = 0; 
-        $violations = 0;
-        $failures = 0;
-        $warnings = 0;
-        $must_checks = 0;
-        $hidden = 0;
+        $total_violations = 0;
+        $total_warnings = 0;
+        
 
         // Tallys number of pages with errors/warnings
         $violations_pages = 0;
         $warnings_pages = 0;
         foreach ($dataset as $entry) {
             $results = json_decode($entry['results'], true);
-            // return $results;
-            $violations_page = false;
-            $warnings_page = false;
+            
+            $page_has_violations = false;
+            $page_has_warnings = false;
+            // Tally elements in violation for a specific page
+            $violations_count_this_page = 0;
+            $warnings_count_this_page = 0;
             foreach($results['rule_results'] as
                 [
                     "elements_violation" => $elements_violation,
                     "elements_warning"=> $elements_warning
                 ]
-            ){
-                
-                $violations += $elements_violation;
-                if($elements_violation > 0 && $violations_page == false){
-                    $violations_page = true;
+            ){       
+                $total_violations += $elements_violation;
+                $violations_count_this_page += $elements_violation;
+
+                if($elements_violation > 0 && $page_has_violations == false){
+                    $page_has_violations = true;
+                    
                 }
                 
-                $warnings += $elements_warning;
-                if($elements_warning > 0 && $warnings_page == false){
-                    $warnings_page = true;
+                $total_warnings += $elements_warning;
+                $warnings_count_this_page += $elements_warning;
+                
+                if($elements_warning > 0 && $page_has_warnings == false){
+                    $page_has_warnings = true;
+                    
                 }
             }
-            if($violations_page) {
+            if($page_has_violations) {
                 $violations_pages++;
             }
-            if($warnings_page) {
+            if($page_has_warnings) {
                 $warnings_pages++;
             }
            
@@ -60,12 +65,14 @@ class ScanImportController extends Controller
                 'scan_id' =>$scan->id,
                 'title'   =>$entry['title'],
                 'results' =>$entry['results'],
+                'violation_count'=>$violations_count_this_page,
+                'warning_count'=>$warnings_count_this_page
             ]);
         }
 
         
-        $scan->violation_count = $violations;
-        $scan->warning_count = $warnings;
+        $scan->violation_count = $total_violations;
+        $scan->warning_count = $total_warnings;
         $scan->violation_count_pages = $violations_pages;
         $scan->warning_count_pages = $warnings_pages;
 
