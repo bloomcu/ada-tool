@@ -52,7 +52,7 @@ class ApifyADAScanner implements ApifyInterface
     public function getDataset(string $datasetId)
     {
         try {
-            $request = Http::get('https://api.apify.com/v2/datasets/' . $datasetId . '/items?token=' . $this->token)->json();
+            $request = Http::timeout(100)->get('https://api.apify.com/v2/datasets/' . $datasetId . '/items?token=' . $this->token)->json();
 
             // Only return results with a url (this omits PDFs and other files that slipped into the crawl)
             $collection = collect($request);
@@ -70,7 +70,7 @@ class ApifyADAScanner implements ApifyInterface
 
             return $mapped;
         } catch (\Exception $exception) {
-            abort(500, 'Could not get Apify results. ' . $request['error']['message']);
+            abort(500, 'Could not get Apify results. ' . $exception);
         }
     }
 
@@ -80,7 +80,7 @@ class ApifyADAScanner implements ApifyInterface
             $request = Http::post('https://api.apify.com/v2/actor-runs/' . $runId . '/abort?token=' . $this->token)->json();
             return $request;
         } catch (\Exception $exception) {
-            abort(500, 'Could not abort Apify run. ' . $request['error']['message']);
+            abort(500, 'Could not abort Apify run. ' . $exception);
         }
     }
 }
