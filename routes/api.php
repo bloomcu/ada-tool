@@ -11,11 +11,20 @@ use DDD\Http\Scans\AbortRunController;
 use DDD\Http\Pages\PageController;
 
 // Scans
+// TODO: Can these be behind auth?
 Route::prefix('scans')->group(function() {
     Route::get('/', [ScanController::class, 'store']);
     Route::get('/status/{evaluation}', [StatusController::class, 'status']);
     Route::get('/dataset', [DataSetController::class, 'dataset']);
     Route::get('/abortrun/{evaluation}', [AbortRunController::class, 'abortRun']);
+});
+
+// Scan - Public
+Route::prefix('{organization:slug}')->scopeBindings()->group(function() {
+    Route::prefix('scans')->group(function() {
+        Route::get('/{scan}', [ScanController::class, 'show']);
+        Route::get('/{scan}/status', [StatusController::class, 'show']);
+    });
 });
 
 Route::middleware('auth:sanctum')->group(function() {
@@ -36,10 +45,8 @@ Route::middleware('auth:sanctum')->group(function() {
         // Scans
         Route::prefix('scans')->group(function() {
             Route::get('/', [ScanController::class, 'index']);
-            Route::get('/{scan}', [ScanController::class, 'show']);
 
             // Active scans
-            Route::get('/{scan}/status', [StatusController::class, 'show']); // Check status on Apify
             Route::get('/{scan}/dataset', [DataSetController::class, 'show']); // Show dataset from Apify
             Route::get('/{scan}/abort', [AbortRunController::class, 'abortRun']); // Abort run on Apify
             Route::get('/{scan}/import', [ScanImportController::class, 'import']); // Abort run on Apify
