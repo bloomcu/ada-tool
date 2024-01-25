@@ -18,7 +18,7 @@ class ScanController extends Controller
 
     public function show(Organization $organization, Scan $scan)
     {
-        ini_set('memory_limit', '1024M');
+        
         return new ScanResource($scan->load('pages'));
     }
 }
