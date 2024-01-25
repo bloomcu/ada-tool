@@ -25,7 +25,8 @@ class ScanResource extends JsonResource
             'violation_count_pages'=>$this->violation_count_pages,
             'warning_count_pages'=>$this->warning_count_pages,
             'status' => $this->status,
-            'pages' => $this->pages,
+            'page_count'=>$this->whenCounted('pages'),
+            'pages' => $this->whenLoaded('pages'),
             'created_at' => $this->created_at,
         ];
     }
