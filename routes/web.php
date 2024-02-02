@@ -16,11 +16,5 @@ use DDD\Domain\Scans\Scan;
 */
 
 Route::get('/', function () {
-    $scans = Scan::all();
-    foreach($scans as $scan) {
-        echo $scan->id . '<br>';
-    }
-    $site = Site::find(1)->with('scans.pages')->get();
-    // print_r($site);
-    return view('welcome', compact('site'));
+    
 });
