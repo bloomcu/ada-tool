@@ -14,7 +14,8 @@ class SiteController extends Controller
 {
     public function index(Organization $organization)
     {   
-        return SiteResource::collection($organization->sites);
+        
+        return SiteResource::collection($organization->sites->loadCount('scans'));
     }
 
     public function store(Organization $organization, SiteStoreRequest $request)
@@ -32,7 +33,9 @@ class SiteController extends Controller
 
     public function show(Organization $organization, Site $site)
     {
-        return new SiteResource($site);
+        return new SiteResource($site->load(['scans'=>function($q){
+            $q->withCount('pages');
+        }]));
     }
 
     public function update(Organization $organization, Site $site, SiteUpdateRequest $request)

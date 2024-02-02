@@ -20,7 +20,8 @@ class SiteResource extends JsonResource
             'organization_id' => $this->organization_id,
             'title' => $this->title,
             'domain' => $this->domain,
-            'scans' => ScanResource::collection($this->scans),
+            'scan_count'=> $this->whenCounted('scans'),
+            'scans' => ScanResource::collection($this->whenLoaded('scans')),
         ];
     }
 }
