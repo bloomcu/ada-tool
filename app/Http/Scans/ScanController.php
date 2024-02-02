@@ -13,11 +13,12 @@ class ScanController extends Controller
     {
         $scans = $organization->scans()->latest()->get();
 
-        return ScanResource::collection($scans);
+        return ScanResource::collection($scans->loadCount('pages'));
     }
 
     public function show(Organization $organization, Scan $scan)
     {
-        return new ScanResource($scan);
+        
+        return new ScanResource($scan->load('pages'));
     }
 }
