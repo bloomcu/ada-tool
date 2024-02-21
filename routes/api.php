@@ -25,6 +25,10 @@ Route::prefix('{organization:slug}')->scopeBindings()->group(function() {
         Route::get('/{scan}', [ScanController::class, 'show']);
         Route::get('/{scan}/status', [StatusController::class, 'show']);
     });
+     // Pages
+    Route::prefix('scans/{scan}/pages')->group(function() {
+        Route::get('/{page}', [PageController::class, 'show']);
+    });
 });
 
 Route::middleware('auth:sanctum')->group(function() {
@@ -52,9 +56,6 @@ Route::middleware('auth:sanctum')->group(function() {
             Route::get('/{scan}/import', [ScanImportController::class, 'import']); // Abort run on Apify
         });
 
-        // Pages
-        Route::prefix('scans/{scan}/pages')->group(function() {
-            Route::get('/{page}', [PageController::class, 'show']);
-        });
+       
     });
 });
