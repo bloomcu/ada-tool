@@ -7,12 +7,13 @@ use DDD\Domain\Pages\Page;
 use DDD\Domain\Organizations\Organization;
 use DDD\App\Services\Apify\ApifyInterface;
 use DDD\App\Controllers\Controller;
+use Illuminate\Support\Facades\Log;
 
 class ScanImportController extends Controller
 {
     public function import(Organization $organization, Scan $scan, ApifyInterface $apifyService)
     {
-        
+        // ini_set('memory_limit', '1024M');
         $dataset = $apifyService->getDataset($scan->dataset_id);
         
         $dataset = json_decode($dataset, true);
@@ -24,6 +25,7 @@ class ScanImportController extends Controller
         // Tallys number of pages with errors/warnings
         $violations_pages = 0;
         $warnings_pages = 0;
+        $pages = [];
         foreach ($dataset as $entry) {
             $results = json_decode($entry['results'], true);
             
@@ -60,17 +62,20 @@ class ScanImportController extends Controller
             if($page_has_warnings) {
                 $warnings_pages++;
             }
-           
-            Page::create([
+            $pages[] = [
                 'scan_id' =>$scan->id,
                 'title'   =>$entry['title'],
                 'results' =>$entry['results'],
                 'violation_count'=>$violations_count_this_page,
                 'warning_count'=>$warnings_count_this_page
-            ]);
+            ];
+            
         }
-
-        
+        $chunks = array_chunk($pages, 20);
+        foreach ($chunks as $chunk) {
+            Page::insert($chunk);
+        }
+        // Log::info('usage_old' . memory_get_peak_usage(true));
         $scan->violation_count = $total_violations;
         $scan->warning_count = $total_warnings;
         $scan->violation_count_pages = $violations_pages;
