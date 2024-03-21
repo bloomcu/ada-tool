@@ -18,7 +18,8 @@ class ApifyADAScanner implements ApifyInterface
         try {
             $request = Http::post('https://api.apify.com/v2/acts/' . $this->actor . '/runs?token=' . $this->token, [
                 'startUrls' => [['url' => $url . '/']],
-                'pseudoUrls' => [['purl' => $url . '/[.*?]']]
+                'pseudoUrls' => [['purl' => $url . '/[.*?]']],
+                'useResidentialProxy' => true
             ])->json();
 
             $response = $request['data'];
