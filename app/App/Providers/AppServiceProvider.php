@@ -9,6 +9,8 @@ use Laravel\Cashier\Cashier;
 
 // Domains
 use DDD\Domain\Base\Organizations\Organization;
+use DDD\Domain\Scans\Observers\ScanObserver;
+use DDD\Domain\Scans\Scan;
 
 // Interfaces
 // use DDD\App\Services\CDN\CDNInterface;
@@ -37,5 +39,6 @@ class AppServiceProvider extends ServiceProvider
     {
         // $this->app->bind(CDNInterface::class, DigitalOceanCDNService::class);
         Cashier::useCustomerModel(Organization::class);
+        Scan::observe(ScanObserver::class);
     }
 }
