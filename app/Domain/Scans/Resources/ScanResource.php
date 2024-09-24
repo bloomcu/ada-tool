@@ -28,7 +28,9 @@ class ScanResource extends JsonResource
             'page_count'=>$this->whenCounted('pages'),
             'pages' => $this->whenLoaded('pages', function() {
                 return $this->pages()
-                    ->select('id', 'title', 'violation_count', 'warning_count')
+                    ->select('id', 'title', 'violation_count', 'warning_count',
+                    'rescan_id')
+                    ->with('rescan')
                     ->orderBy('violation_count', 'DESC')
                     ->orderBy('warning_count', 'DESC')
                     ->get();
