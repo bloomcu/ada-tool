@@ -11,7 +11,7 @@ class ScanController extends Controller
 {
     public function index(Organization $organization)
     {
-        $scans = $organization->scans()->latest()->get();
+        $scans = $organization->scans()->where('is_single_page', '!=', true)->latest()->get();
 
         return ScanResource::collection($scans->loadCount('pages'));
     }

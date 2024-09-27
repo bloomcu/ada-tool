@@ -3,6 +3,7 @@
 namespace DDD\Domain\Scans\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\DB;
 
 class ScanResource extends JsonResource
 {
@@ -14,6 +15,7 @@ class ScanResource extends JsonResource
      */
     public function toArray($request)
     {
+        ini_set('MEMORY_LIMIT', '256M');
         return [
             'id' => $this->id,
             'site' => $this->site,
@@ -28,8 +30,9 @@ class ScanResource extends JsonResource
             'page_count'=>$this->whenCounted('pages'),
             'pages' => $this->whenLoaded('pages', function() {
                 return $this->pages()
-                    ->select('id', 'title', 'violation_count', 'warning_count',
-                    'rescan_id')
+                    // Add RAW query to pull only eval URL param from scan
+                    ->select('id', 'title', 'violation_count', 'warning_count', 'rescan_id', 
+                        DB::raw('JSON_UNQUOTE(JSON_EXTRACT(results, "$.eval_url")) as eval_url'))
                     ->with('rescan')
                     ->orderBy('violation_count', 'DESC')
                     ->orderBy('warning_count', 'DESC')
