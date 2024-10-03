@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use DDD\Domain\Sites\Site;
 use DDD\Domain\Evaluations\Evaluation;
+use DDD\Domain\Scans\Scan;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Page extends Model
 {
@@ -31,4 +33,10 @@ class Page extends Model
             get: fn (string $value) => json_decode($value, true),
         );
     }
+    public function rescan(): HasOne
+    {
+        
+        return $this->hasOne(Scan::class, 'id', 'rescan_id');
+    }
+    
 }

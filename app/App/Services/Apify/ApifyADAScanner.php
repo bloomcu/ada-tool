@@ -13,13 +13,14 @@ class ApifyADAScanner implements ApifyInterface
         protected string $actor,
     ) {}
 
-    public function runActor(string $url)
+    public function runActor(string $url, bool $enqueueLinks = true)
     {
         try {
             $request = Http::post('https://api.apify.com/v2/acts/' . $this->actor . '/runs?token=' . $this->token, [
                 'startUrls' => [['url' => $url . '/']],
                 'pseudoUrls' => [['purl' => $url . '/[.*?]']],
-                'useResidentialProxy' => true
+                'useResidentialProxy' => true,
+                'shouldEnqueueLinks'=> $enqueueLinks
             ])->json();
 
             $response = $request['data'];
