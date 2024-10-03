@@ -9,6 +9,7 @@ use DDD\Http\Scans\ScanController;
 use DDD\Http\Scans\DataSetController;
 use DDD\Http\Scans\AbortRunController;
 use DDD\Http\Pages\PageController;
+use DDD\Http\Pages\PageScanController;
 
 // Scans
 // TODO: Can these be behind auth?
@@ -29,6 +30,8 @@ Route::prefix('{organization:slug}')->scopeBindings()->group(function() {
     Route::prefix('scans/{scan}/pages')->group(function() {
         Route::get('/{page}', [PageController::class, 'show']);
     });
+
+    
 });
 
 Route::middleware('auth:sanctum')->group(function() {
@@ -44,6 +47,10 @@ Route::middleware('auth:sanctum')->group(function() {
 
             // Scan site
             Route::post('/{site}/scan', [SiteScanController::class, 'store']);
+            //Rescan page
+            Route::post('{site}/scans/{scan}/page/{page}/scan', [PageScanController::class, 'store']);
+            
+            Route::get('{site}/scans/{scan}/page/{page}/rescan/import', [ScanImportController::class, 'importPage']); 
         });
 
         // Scans

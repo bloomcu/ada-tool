@@ -34,6 +34,7 @@ class SiteController extends Controller
     public function show(Organization $organization, Site $site)
     {
         return new SiteResource($site->load(['scans'=>function($q){
+            $q->where('is_single_page', '!=', true);
             $q->withCount('pages');
         }]));
     }
