@@ -15,7 +15,7 @@ class ScanResource extends JsonResource
      */
     public function toArray($request)
     {
-        ini_set('MEMORY_LIMIT', '256M');
+        // ini_set('MEMORY_LIMIT', '256M');
         return [
             'id' => $this->id,
             'site' => $this->site,
