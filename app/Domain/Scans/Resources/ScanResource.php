@@ -31,8 +31,7 @@ class ScanResource extends JsonResource
             'pages' => $this->whenLoaded('pages', function() {
                 return $this->pages()
                     // Add RAW query to pull only eval URL param from scan
-                    ->select('id', 'title', 'violation_count', 'warning_count', 'rescan_id', 
-                        DB::raw('JSON_UNQUOTE(JSON_EXTRACT(results, "$.eval_url")) as eval_url'))
+                    ->select('id', 'title', 'violation_count', 'warning_count', 'rescan_id')
                     ->with('rescan')
                     ->orderBy('violation_count', 'DESC')
                     ->orderBy('warning_count', 'DESC')

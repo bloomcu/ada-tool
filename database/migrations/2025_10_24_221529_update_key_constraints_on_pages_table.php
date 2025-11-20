@@ -7,77 +7,140 @@ use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
-    public function up()
+    public function up(): void
     {
-        //
-        // First handle the scan_id foreign key
-        Schema::table('pages', function (Blueprint $table) {
-            $table->dropForeign(['scan_id']);
-            $table->foreign('scan_id')->references('id')->on('scans')->onDelete('cascade');
-        });
+        // ---- helpers -------------------------------------------------------
+        $hasFk = function (string $name): bool {
+            return (int) (DB::selectOne("
+                SELECT COUNT(*) c
+                FROM information_schema.TABLE_CONSTRAINTS
+                WHERE CONSTRAINT_SCHEMA = DATABASE()
+                  AND TABLE_NAME = 'pages'
+                  AND CONSTRAINT_TYPE = 'FOREIGN KEY'
+                  AND CONSTRAINT_NAME = ?
+            ", [$name])->c ?? 0) > 0;
+        };
 
-        // Now safely handle the rescan_id conversion
-        Schema::table('pages', function (Blueprint $table) {
-            // Create new column with correct type
-            $table->unsignedBigInteger('new_rescan_id')->nullable();
-        });
+        $hasCol = fn (string $col) => Schema::hasColumn('pages', $col);
 
-        // Copy data from old column to new column
-        DB::statement('UPDATE pages SET new_rescan_id = rescan_id');
+        // ---- part 1: scan_id FK (drop if exists, then (re)add) -------------
+        if ($hasFk('pages_scan_id_foreign')) {
+            Schema::table('pages', function (Blueprint $table) {
+                $table->dropForeign(['scan_id']); // drops pages_scan_id_foreign
+            });
+        }
+        // (re)add using Laravel default name
+        if (!$hasFk('pages_scan_id_foreign')) {
+            Schema::table('pages', function (Blueprint $table) {
+                $table->foreign('scan_id')
+                      ->references('id')->on('scans')
+                      ->onDelete('cascade');
+            });
+        }
 
-        Schema::table('pages', function (Blueprint $table) {
-            // Drop old column
-            $table->dropColumn('rescan_id');
-        });
+        // ---- part 2: rescan_id copy -> drop -> rename -> add FK ------------
 
-        Schema::table('pages', function (Blueprint $table) {
-            // Rename new column to original name
-            $table->renameColumn('new_rescan_id', 'rescan_id');
-            // Add foreign key constraint
-            $table->foreign('rescan_id')->references('id')->on('scans')->onDelete('cascade');
-        });
+        // 2a) Create new_rescan_id if missing
+        if (!$hasCol('new_rescan_id')) {
+            Schema::table('pages', function (Blueprint $table) {
+                $table->unsignedBigInteger('new_rescan_id')->nullable();
+            });
+        }
+
+        // 2b) Copy data only if both columns exist and new_rescan_id is empty
+        if ($hasCol('rescan_id') && $hasCol('new_rescan_id')) {
+            // copy once; harmless to rerun
+            DB::statement('UPDATE pages SET new_rescan_id = rescan_id WHERE new_rescan_id IS NULL AND rescan_id IS NOT NULL');
+        }
+
+        // 2c) Drop old rescan_id if it still exists
+        if ($hasCol('rescan_id')) {
+            // Drop FK first if it exists under the default name
+            if ($hasFk('pages_rescan_id_foreign')) {
+                Schema::table('pages', function (Blueprint $table) {
+                    $table->dropForeign(['rescan_id']);
+                });
+            }
+            Schema::table('pages', function (Blueprint $table) {
+                $table->dropColumn('rescan_id');
+            });
+        }
+
+        // 2d) Rename new_rescan_id -> rescan_id if needed
+        if ($hasCol('new_rescan_id') && !$hasCol('rescan_id')) {
+            Schema::table('pages', function (Blueprint $table) {
+                // requires doctrine/dbal
+                $table->renameColumn('new_rescan_id', 'rescan_id');
+            });
+        }
+
+        // 2e) Add FK on rescan_id (Laravel default name)
+        if ($hasCol('rescan_id') && !$hasFk('pages_rescan_id_foreign')) {
+            Schema::table('pages', function (Blueprint $table) {
+                $table->foreign('rescan_id')
+                      ->references('id')->on('scans')
+                      ->onDelete('cascade');
+            });
+        }
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
-    public function down()
+    public function down(): void
     {
-        // First revert the scan_id changes
+        // ---- helpers -------------------------------------------------------
+        $hasFk = function (string $name): bool {
+            return (int) (DB::selectOne("
+                SELECT COUNT(*) c
+                FROM information_schema.TABLE_CONSTRAINTS
+                WHERE CONSTRAINT_SCHEMA = DATABASE()
+                  AND TABLE_NAME = 'pages'
+                  AND CONSTRAINT_TYPE = 'FOREIGN KEY'
+                  AND CONSTRAINT_NAME = ?
+            ", [$name])->c ?? 0) > 0;
+        };
+        $hasCol = fn (string $col) => Schema::hasColumn('pages', $col);
+
+        // revert scan_id FK to non-cascade (match your original down)
+        if ($hasFk('pages_scan_id_foreign')) {
+            Schema::table('pages', function (Blueprint $table) {
+                $table->dropForeign(['scan_id']);
+            });
+        }
         Schema::table('pages', function (Blueprint $table) {
-            $table->dropForeign(['scan_id']);
+            // add without onDelete cascade (Laravel default name)
             $table->foreign('scan_id')->references('id')->on('scans');
         });
 
-        // Now revert the rescan_id changes
-        Schema::table('pages', function (Blueprint $table) {
-            // Drop the foreign key
-            $table->dropForeign(['rescan_id']);
-        });
+        // rescan_id: drop FK if present
+        if ($hasFk('pages_rescan_id_foreign')) {
+            Schema::table('pages', function (Blueprint $table) {
+                $table->dropForeign(['rescan_id']);
+            });
+        }
 
-        Schema::table('pages', function (Blueprint $table) {
-            // Create new column with original type
-            $table->bigInteger('new_rescan_id')->nullable();
-        });
+        // create new_rescan_id (signed) if missing
+        if (!$hasCol('new_rescan_id')) {
+            Schema::table('pages', function (Blueprint $table) {
+                $table->bigInteger('new_rescan_id')->nullable();
+            });
+        }
 
-        // Copy data back
-        DB::statement('UPDATE pages SET new_rescan_id = rescan_id');
+        // copy back if both columns exist
+        if ($hasCol('rescan_id') && $hasCol('new_rescan_id')) {
+            DB::statement('UPDATE pages SET new_rescan_id = rescan_id WHERE new_rescan_id IS NULL AND rescan_id IS NOT NULL');
+        }
 
-        Schema::table('pages', function (Blueprint $table) {
-            // Drop the unsigned column
-            $table->dropColumn('rescan_id');
-        });
+        // drop unsigned rescan_id if exists
+        if ($hasCol('rescan_id')) {
+            Schema::table('pages', function (Blueprint $table) {
+                $table->dropColumn('rescan_id');
+            });
+        }
 
-        Schema::table('pages', function (Blueprint $table) {
-            // Rename back to original name
-            $table->renameColumn('new_rescan_id', 'rescan_id');
-        });
+        // rename new_rescan_id -> rescan_id if needed
+        if ($hasCol('new_rescan_id') && !$hasCol('rescan_id')) {
+            Schema::table('pages', function (Blueprint $table) {
+                $table->renameColumn('new_rescan_id', 'rescan_id'); // needs doctrine/dbal
+            });
+        }
     }
 };
