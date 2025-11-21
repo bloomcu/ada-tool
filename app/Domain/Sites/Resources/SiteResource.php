@@ -19,6 +19,7 @@ class SiteResource extends JsonResource
             'id' => $this->id,
             'organization_id' => $this->organization_id,
             'title' => $this->title,
+            'scan_schedule' => $this->scan_schedule,
             'domain' => $this->domain,
             'scan_count'=> $this->whenCounted('scans'),
             'scans' => ScanResource::collection($this->whenLoaded('scans')),

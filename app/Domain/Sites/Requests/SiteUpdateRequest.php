@@ -28,6 +28,7 @@ class SiteUpdateRequest extends FormRequest
         return [
             'title' => 'nullable|string',
             'domain' => 'nullable|string',
+            'scan_schedule' => 'nullable|in:manual,quarterly',
             'launch_info.launch_date' => 'nullable|date',
             'launch_info.freeze_date' => 'nullable|date',
             'launch_info.dev_domain' => 'nullable|string',

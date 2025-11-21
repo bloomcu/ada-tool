@@ -28,6 +28,7 @@ class SiteStoreRequest extends FormRequest
         return [
             'title' => 'nullable|string',
             'domain' => 'required|string|unique:sites',
+            'scan_schedule' => 'nullable|in:manual,quarterly',
             'launch_info' => 'nullable|array',
             'launch_info.launch_date' => 'nullable|date',
             'launch_info.freeze_date' => 'nullable|date',

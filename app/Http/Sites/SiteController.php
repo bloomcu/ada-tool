@@ -9,6 +9,7 @@ use DDD\Domain\Sites\Requests\SiteStoreRequest;
 use DDD\Domain\Organizations\Organization;
 use DDD\App\Helpers\UrlHelpers;
 use DDD\App\Controllers\Controller;
+use DDD\App\Services\Scans\ScanScheduleService;
 
 class SiteController extends Controller
 {
@@ -18,14 +19,18 @@ class SiteController extends Controller
         return SiteResource::collection($organization->sites->loadCount('scans'));
     }
 
-    public function store(Organization $organization, SiteStoreRequest $request)
+    public function store(Organization $organization, SiteStoreRequest $request, ScanScheduleService $scheduleService)
     {
+        $scanSchedule = $request->input('scan_schedule', 'manual');
+
         $site = $organization->sites()->create([
             'title' => $request->title,
             'url' => $request->url,
             'domain' => $request->domain, // TODO: Do we need this? If so, make into trait and cast so all url parts are updated
             'scheme' => UrlHelpers::getScheme($request->domain), // TODO: Do we need this?
             'launch_info' => $request->launch_info,
+            'scan_schedule' => $scanSchedule,
+            'next_scan_at' => $scheduleService->calculateNextRun($scanSchedule),
         ]);
 
         return new SiteResource($site);
@@ -39,11 +44,17 @@ class SiteController extends Controller
         }]));
     }
 
-    public function update(Organization $organization, Site $site, SiteUpdateRequest $request)
+    public function update(Organization $organization, Site $site, SiteUpdateRequest $request, ScanScheduleService $scheduleService)
     {
-        $site->update($request->validated());
+        $data = $request->validated();
 
-        return new SiteResource($site);
+        if (array_key_exists('scan_schedule', $data) && $data['scan_schedule'] !== $site->scan_schedule) {
+            $data['next_scan_at'] = $scheduleService->calculateNextRun($data['scan_schedule']);
+        }
+
+        $site->update($data);
+
+        return new SiteResource($site->refresh());
     }
 
     public function destroy(Organization $organization, Site $site)
