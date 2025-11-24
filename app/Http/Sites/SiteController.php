@@ -23,6 +23,8 @@ class SiteController extends Controller
     {
         $scanSchedule = $request->input('scan_schedule', 'manual');
 
+        $notificationEmails = $request->input('scan_notification_emails');
+
         $site = $organization->sites()->create([
             'title' => $request->title,
             'url' => $request->url,
@@ -31,6 +33,7 @@ class SiteController extends Controller
             'launch_info' => $request->launch_info,
             'scan_schedule' => $scanSchedule,
             'next_scan_at' => $scheduleService->calculateNextRun($scanSchedule),
+            'scan_notification_emails' => $notificationEmails ? trim($notificationEmails) : null,
         ]);
 
         return new SiteResource($site);
@@ -47,6 +50,12 @@ class SiteController extends Controller
     public function update(Organization $organization, Site $site, SiteUpdateRequest $request, ScanScheduleService $scheduleService)
     {
         $data = $request->validated();
+
+        if (array_key_exists('scan_notification_emails', $data)) {
+            $data['scan_notification_emails'] = $data['scan_notification_emails']
+                ? trim($data['scan_notification_emails'])
+                : null;
+        }
 
         if (array_key_exists('scan_schedule', $data) && $data['scan_schedule'] !== $site->scan_schedule) {
             $data['next_scan_at'] = $scheduleService->calculateNextRun($data['scan_schedule']);

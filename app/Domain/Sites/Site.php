@@ -45,4 +45,21 @@ class Site extends Model
     {
         return $this->hasMany(Evaluation::class);
     }
+
+    /**
+     * Get normalized list of notification email addresses.
+     */
+    public function notificationEmailList(): array
+    {
+        if (! $this->scan_notification_emails) {
+            return [];
+        }
+
+        return collect(preg_split('/[,\s;]+/', $this->scan_notification_emails))
+            ->map(fn ($email) => trim($email))
+            ->filter()
+            ->unique()
+            ->values()
+            ->toArray();
+    }
 }
