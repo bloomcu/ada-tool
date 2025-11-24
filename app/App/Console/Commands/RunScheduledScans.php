@@ -4,9 +4,12 @@ namespace DDD\App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use DDD\Domain\Sites\Site;
 use DDD\App\Services\Apify\ApifyInterface;
 use DDD\App\Services\Scans\ScanScheduleService;
+use DDD\Domain\Scans\Mail\ScheduledScanStarted;
+use DDD\Domain\Scans\Scan;
 
 class RunScheduledScans extends Command
 {
@@ -30,6 +33,7 @@ class RunScheduledScans extends Command
     public function handle(ApifyInterface $apifyService, ScanScheduleService $scheduleService): int
     {
         $dueSites = Site::query()
+            ->with('organization')
             ->where('scan_schedule', 'quarterly')
             ->whereNotNull('next_scan_at')
             ->where('next_scan_at', '<=', now())
@@ -66,6 +70,8 @@ class RunScheduledScans extends Command
                     'next_scan_at' => $scheduleService->calculateNextRun($site->scan_schedule),
                 ])->save();
 
+                $this->sendNotifications($site, $scan);
+
                 $this->line("Scan {$scan->id} created for site {$site->domain}.");
             } catch (\Throwable $exception) {
                 Log::error('Unable to trigger scheduled scan', [
@@ -79,5 +85,28 @@ class RunScheduledScans extends Command
         });
 
         return Command::SUCCESS;
+    }
+
+    protected function sendNotifications(Site $site, Scan $scan): void
+    {
+        $recipients = $site->notificationEmailList();
+
+        if (empty($recipients)) {
+            return;
+        }
+
+        $scanUrl = $this->buildScanUrl($site, $scan->id);
+
+        foreach ($recipients as $recipient) {
+            Mail::to($recipient)->send(new ScheduledScanStarted($site, $scan, $scanUrl));
+        }
+    }
+
+    protected function buildScanUrl(Site $site, int $scanId): string
+    {
+        $base = rtrim(config('app.frontend_url') ?? config('app.url'), '/');
+        $organizationSlug = $site->organization?->slug ?? $site->organization_id;
+
+        return sprintf('%s/%s/scans/%s', $base, $organizationSlug, $scanId);
     }
 }
