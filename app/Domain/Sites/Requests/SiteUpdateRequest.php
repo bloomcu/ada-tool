@@ -30,6 +30,7 @@ class SiteUpdateRequest extends FormRequest
             'domain' => 'nullable|string',
             'scan_schedule' => 'nullable|in:manual,quarterly',
             'scan_notification_emails' => 'nullable|string',
+            'include_3pi' => 'boolean',
             'launch_info.launch_date' => 'nullable|date',
             'launch_info.freeze_date' => 'nullable|date',
             'launch_info.dev_domain' => 'nullable|string',

@@ -20,6 +20,7 @@ class SiteResource extends JsonResource
             'organization_id' => $this->organization_id,
             'title' => $this->title,
             'scan_schedule' => $this->scan_schedule,
+            'include_3pi' => $this->include_3pi,
             'next_scan_at' => $this->next_scan_at,
             'scan_notification_emails' => $this->scan_notification_emails,
             'domain' => $this->domain,
