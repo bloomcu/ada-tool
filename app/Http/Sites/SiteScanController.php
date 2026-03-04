@@ -12,7 +12,14 @@ class SiteScanController extends Controller
 {
     public function store(Organization $organization, Site $site, ApifyInterface $apifyService)
     {
-        $actor = $apifyService->runActor('https://' . $site->domain, true);
+        $actor = $apifyService->runActor('https://' . $site->domain, true, $site->include_3pi);
+
+         $scan = $site->scans()->create([
+            'organization_id' => $site->organization_id,
+            'run_id'          => $actor['run_id'],
+            'queue_id'        => $actor['queue_id'],
+            'dataset_id'      => $actor['dataset_id'],
+        ]);
 
         $scan = $site->scans()->create([
             'organization_id' => $organization->id,

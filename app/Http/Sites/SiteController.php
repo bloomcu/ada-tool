@@ -24,6 +24,7 @@ class SiteController extends Controller
         $scanSchedule = $request->input('scan_schedule', 'manual');
 
         $notificationEmails = $request->input('scan_notification_emails');
+        $include_3pi = $request->input('include_3pi', true);
 
         $site = $organization->sites()->create([
             'title' => $request->title,
@@ -31,6 +32,7 @@ class SiteController extends Controller
             'domain' => $request->domain, // TODO: Do we need this? If so, make into trait and cast so all url parts are updated
             'scheme' => UrlHelpers::getScheme($request->domain), // TODO: Do we need this?
             'launch_info' => $request->launch_info,
+            'include_3pi' => $include_3pi,
             'scan_schedule' => $scanSchedule,
             'next_scan_at' => $scheduleService->calculateNextRun($scanSchedule),
             'scan_notification_emails' => $notificationEmails ? trim($notificationEmails) : null,

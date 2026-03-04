@@ -57,7 +57,7 @@ class RunScheduledScans extends Command
             try {
                 $this->info("Triggering scan for site {$site->domain} (site #{$site->id}).");
 
-                $actor = $apifyService->runActor('https://' . $site->domain, true);
+                $actor = $apifyService->runActor('https://' . $site->domain, true, $site->include_3pi);
 
                 $scan = $site->scans()->create([
                     'organization_id' => $site->organization_id,

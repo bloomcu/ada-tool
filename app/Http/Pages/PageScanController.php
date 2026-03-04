@@ -23,7 +23,7 @@ class PageScanController extends Controller
         if(! $page->results['eval_url']) {
             return false;
         }
-        $actor = $apifyService->runActor($page->results['eval_url'], false);
+        $actor = $apifyService->runActor($page->results['eval_url'], false, $site->include_3pi);
 
         $new_scan = $site->scans()->create([
             'organization_id' => $organization->id,
