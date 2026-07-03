@@ -21,12 +21,14 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · **P0** must-have before
 ---
 
 ### 0. Test infrastructure  (P0)
-- [ ] Configure a dedicated testing DB (sqlite `:memory:` or a `testing` MySQL) in `phpunit.xml`
-- [ ] Enable `RefreshDatabase` trait usage baseline in a shared `TestCase` helper
-- [ ] Add model factories for every Eloquent model (see §2) — currently missing
-- [ ] Add fake/mocks for external services: Apify, DigitalOcean CDN, Pusher, Mailgun
+- [x] Configure a dedicated testing DB in `phpunit.xml` — MySQL `testing` (Sail-provisioned)
+- [x] Enable `RefreshDatabase` trait usage baseline in a shared `TestCase` helper — already present
+- [x] Add model factories for the product/base Eloquent models — Organization, User, Site,
+      Scan, Page, Evaluation (fixed resolution: they were misplaced + used the removed `factory()` helper)
+- [ ] Add fake/mocks for external services: Apify, Pusher, Mailgun
 - [ ] CI step to run `php artisan test` on every push (gate the upgrade PRs)
-- [ ] Baseline: capture current pass state on Laravel 9 so we can diff after each upgrade step
+- [x] Baseline: capture current pass state on Laravel 9 — **green**, 5/5 in `OrganizationTest`
+      (`sail artisan test --testsuite Unit`). The suite had never run before this.
 
 ### 1. Feature / HTTP tests — API endpoints  (P0)
 Covers the real product surface in `routes/api.php` (scans/sites/pages) plus the
