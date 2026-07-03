@@ -5,18 +5,13 @@ namespace Tests\Unit\Domain\Organizations;
 use Tests\TestCase;
 
 // Models
-use DDD\Domain\Base\Organizations\Organization;
+use DDD\Domain\Organizations\Organization;
 use DDD\Domain\Base\Users\User;
-use DDD\Domain\Base\Teams\Team;
-use DDD\Domain\Base\Media\Media;
+use DDD\Domain\Sites\Site;
+use DDD\Domain\Scans\Scan;
 
 class OrganizationTest extends TestCase
 {
-    public function setUp(): void
-    {
-        parent::setUp();
-    }
-
     /** @test */
     public function it_has_a_slug()
     {
@@ -30,7 +25,7 @@ class OrganizationTest extends TestCase
     {
         $organization = Organization::factory()->create();
 
-        $this->assertEquals($organization->getRouteKeyName(), 'slug');
+        $this->assertEquals('slug', $organization->getRouteKeyName());
     }
 
     /** @test */
@@ -44,22 +39,25 @@ class OrganizationTest extends TestCase
     }
 
     /** @test */
-    public function it_has_many_teams()
+    public function it_has_many_sites()
     {
         $organization = Organization::factory()
-            ->has(Team::factory())
+            ->has(Site::factory())
             ->create();
 
-        $this->assertInstanceOf(Team::class, $organization->teams->first());
+        $this->assertInstanceOf(Site::class, $organization->sites->first());
     }
 
     /** @test */
-    public function it_has_many_media()
+    public function it_has_many_scans()
     {
-        $organization = Organization::factory()
-            ->has(Media::factory())
-            ->create();
+        $organization = Organization::factory()->create();
+        $site = Site::factory()->for($organization)->create();
+        Scan::factory()->create([
+            'organization_id' => $organization->id,
+            'site_id' => $site->id,
+        ]);
 
-        $this->assertInstanceOf(Media::class, $organization->media->first());
+        $this->assertInstanceOf(Scan::class, $organization->scans->first());
     }
 }
