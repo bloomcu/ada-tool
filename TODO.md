@@ -18,6 +18,17 @@ excluded from this suite. Revisit only if/when one is actually adopted.
 Legend: `[ ]` todo · `[~]` in progress · `[x]` done · **P0** must-have before upgrade ·
 **P1** should-have · **P2** nice-to-have
 
+## Bugs surfaced while writing tests
+Found by writing the tests below; not yet fixed (tests document current behavior).
+- [ ] **`SiteScanController@store` creates the scan twice.** Two identical
+  `$site->scans()->create([...])` calls run back-to-back (the first uses
+  `$site->organization_id`, the second `$organization->id`); only the second is
+  returned. Every site scan writes a duplicate row. Almost certainly a copy-paste
+  leftover — delete the first `create()`.
+- [ ] **Scan POST response omits `status`.** The controller returns the unrefreshed
+  model, so the DB default (`'READY'`) isn't in the JSON response (the row has it).
+  Fix with `$scan->refresh()` before returning, if the client needs status immediately.
+
 ---
 
 ### 0. Test infrastructure  (P0)
@@ -25,7 +36,7 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · **P0** must-have before
 - [x] Enable `RefreshDatabase` trait usage baseline in a shared `TestCase` helper — already present
 - [x] Add model factories for the product/base Eloquent models — Organization, User, Site,
       Scan, Page, Evaluation (fixed resolution: they were misplaced + used the removed `factory()` helper)
-- [ ] Add fake/mocks for external services: Apify, Pusher, Mailgun
+- [~] Add fake/mocks for external services: Apify (done, via `Http::fake()`), Pusher, Mailgun
 - [ ] CI step to run `php artisan test` on every push (gate the upgrade PRs)
 - [x] Baseline: capture current pass state on Laravel 9 — **green**, 5/5 in `OrganizationTest`
       (`sail artisan test --testsuite Unit`). The suite had never run before this.
@@ -36,14 +47,14 @@ auth + organization access layer from `routes/base/api.php`.
 
 **Scans (`app/Http/Scans/*`)** — core product domain, highest priority
 - [ ] Public scan trigger (`ScanController@store`) — the unauthed `GET /scans` entry point
-- [ ] List / show scan (`ScanController@index/@show`) — org-scoped, authed vs public
-- [ ] Site scan trigger (`SiteScanController@store`)
+- [x] List / show scan (`ScanController@index/@show`) — org-scoped, authed vs public
+- [x] Site scan trigger (`SiteScanController@store`) — Apify faked, persists run, forwards 3pi flag, auth required
 - [ ] Page rescan (`PageScanController@store`)
 - [ ] Abort run (`AbortRunController@abortRun`) — Apify faked
 - [ ] Scan import (`ScanImportController@import` / `@importPage`) — Apify dataset → Evaluations
 - [ ] Scan status (`Scans/StatusController@status/@show`) — evaluation status transitions
 - [ ] DataSet retrieval (`DataSetController@dataset/@show`) — Apify faked
-- [ ] Org scoping / `scopeBindings` — scan under wrong org slug 404s
+- [x] Org scoping / `scopeBindings` — scan under wrong org slug 404s
 
 **Sites & Pages (`app/Http/Sites/*`, `app/Http/Pages/*`)** — authed, org-scoped
 - [ ] Site CRUD (`SiteController`) — validates against `SiteStoreRequest` / `SiteUpdateRequest`
