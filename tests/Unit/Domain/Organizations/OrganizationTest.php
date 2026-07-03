@@ -21,11 +21,13 @@ class OrganizationTest extends TestCase
     }
 
     /** @test */
-    public function it_uses_the_slug_for_the_route_key_name()
+    public function it_generates_a_slug_from_its_title()
     {
-        $organization = Organization::factory()->create();
+        $organization = Organization::factory()->create([
+            'title' => 'Acme Federal Credit Union',
+        ]);
 
-        $this->assertEquals('slug', $organization->getRouteKeyName());
+        $this->assertEquals('acme-federal-credit-union', $organization->slug);
     }
 
     /** @test */
