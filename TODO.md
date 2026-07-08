@@ -23,8 +23,11 @@ Found by writing the tests below; not yet fixed (tests document current behavior
 - [x] **`SiteScanController@store` creates the scan twice.** **Fixed** (commit `d928e76`):
   the duplicate `create()` (paste leftover from `1248df7`, 2026-03-04) is removed; kept the
   `$site->organization_id` block. Locked with `assertDatabaseCount('scans', 1)`. Apify was
-  only ever called once. **Prod cleanup:** deployed since 2026-03-04, so existing rows may
-  have twins — de-dupe with `GROUP BY site_id, run_id HAVING COUNT(*) > 1`.
+  only ever called once. **Prod cleanup — DEFERRED until after the Laravel upgrade.**
+  Existing twin rows (2026-03-04 → fix deploy) are functionally harmless and self-prune at
+  1 year (`model:prune` runs daily for `Scan`); only cost is a doubled `scan_count` in the
+  sites list. Revisit post-upgrade: accept self-prune, or one-time de-dupe via
+  `GROUP BY site_id, run_id HAVING COUNT(*) > 1`.
 - [ ] **Scan POST response omits `status`.** The controller returns the unrefreshed
   model, so the DB default (`'READY'`) isn't in the JSON response (the row has it).
   Fix with `$scan->refresh()` before returning, if the client needs status immediately.
