@@ -37,6 +37,38 @@ Found by writing the tests below; not yet fixed (tests document current behavior
   bulk import's per-item `results`/`rule_results` are assumed present); low priority since
   our dataset always includes them, but worth a `?? []` for defense.
 
+## Design follow-up: page rescan "empty result" limbo
+The `9e8320f` guard stopped the 500, but it does **not** resolve the underlying state
+problem — a rescan that finishes successfully with **zero importable results** leaves the
+page stuck "pending" forever. Design work, not a quick fix.
+
+**Why it's stuck:** a page's rescan state is carried entirely by `page.rescan_id`, and the
+**only** place it clears is `importPage`'s success path. An empty dataset now returns 422
+*before* that clear, so `rescan_id` stays set and every retry 422s again.
+
+**Root gap:** `importPage` never checks the Apify **run status**, so it can't distinguish:
+- rescan still `RUNNING` → dataset not ready → 422 "try again" is correct; retry resolves it.
+- rescan `SUCCEEDED` with 0 items → dataset permanently empty (page URL now 404s, redirects
+  to a PDF, or every item filtered out as PDF/image/no-`url` by `getDataset`) → 422 forever
+  → **limbo**. This was the 2026-07-07 case: "successful, but no successful results."
+
+**Current escape hatches (both poor):** (1) re-trigger a rescan — `PageScanController@store`
+overwrites `rescan_id` with no guard, so a later rescan that returns results clears it;
+(2) `Scan` is `Prunable` (deletes runs >1yr), after which `$page->rescan` resolves `null`
+and `importPage` falls through — self-heals in ~a year, leaving a dangling `rescan_id`.
+
+**Options to properly resolve (pick later):**
+- [ ] **Status-aware import** — on empty dataset, branch on run status: `RUNNING` → keep the
+  422; `SUCCEEDED`/`FAILED` → terminal: clear `rescan_id`, return page to prior state, signal
+  "rescan found no results."
+- [ ] **Rescan status field** (page or scan): `PENDING → DONE → NO_RESULTS/FAILED` so the UI
+  shows "no changes found" instead of a perpetual spinner. Cleanest UX; schema + frontend change.
+- [ ] **Cancel path** — let the user abort a stuck rescan (clears `rescan_id`); ties into the
+  parked abort route + the Evaluation→Scan cleanup.
+- [ ] **Response-contract wrinkle** — `importPage` returns plain strings (`'success'`/`'test'`)
+  *and* a JSON 422. If the frontend only branches on `'success'`, it may read the 422 as
+  "not done, keep polling" and *reinforce* the limbo. Normalize the response shape.
+
 ---
 
 ### 0. Test infrastructure  (P0)
