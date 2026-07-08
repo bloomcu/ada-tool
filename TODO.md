@@ -93,8 +93,8 @@ auth + organization access layer from `routes/base/api.php`.
 >   removable. **Deciding input:** grep the frontend for `/abort` and `/dataset` calls.
 
 **Sites & Pages (`app/Http/Sites/*`, `app/Http/Pages/*`)** — authed, org-scoped
-- [ ] Site CRUD (`SiteController`) — validates against `SiteStoreRequest` / `SiteUpdateRequest`
-- [ ] Per-site include/exclude 3pi flags (recent feature — guard the `runActor` logic)
+- [x] Site CRUD (`SiteController`) — index/store/show/update/destroy, validation, org scoping, auth
+- [x] Per-site include/exclude 3pi flags — covered in `SiteScanControllerTest` (forwarded to Apify) + store/update
 - [ ] Page show (`PageController@show`)
 
 **Auth access layer (`app/Http/Base/Auth/*`)** — needed to reach authed routes; Sanctum 2→4 sensitive
