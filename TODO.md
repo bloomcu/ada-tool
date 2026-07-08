@@ -125,11 +125,11 @@ auth + organization access layer from `routes/base/api.php`.
 - [x] Page show (`PageController@show`) — public, scope-bound org→scan→page, decoded results, 404s on mismatch
 
 **Auth access layer (`app/Http/Base/Auth/*`)** — needed to reach authed routes; Sanctum 2→4 sensitive
-- [ ] Login (`AuthLoginController`) — success, bad credentials, token issued
-- [ ] Logout (`AuthLogoutController`) — token revoked
-- [ ] `me` (`AuthMeController`) — authed vs unauthed
-- [ ] Register (`AuthRegisterController`) — success + validation failures
-- [ ] Password forgot / reset (`AuthPasswordForgot/ResetController`) — email dispatched, token flow
+- [x] Login (`AuthLoginController`) — token issued, revokes old tokens, bad creds 422, validation
+- [x] Logout (`AuthLogoutController`) — revokes all tokens, requires auth
+- [x] `me` (`AuthMeController`) — returns authed user, requires auth
+- [x] Register (`AuthRegisterController`) — creates org+user+token (pwned faked), dup email/weak pw/missing fields
+- [x] Password forgot / reset (`AuthPasswordForgot/ResetController`) — neutral forgot, reset via broker token, invalid token 422
 
 **Organizations (`app/Http/Base/Organizations/*`)** — scans/sites are scoped by org slug
 - [ ] Organization CRUD (`OrganizationController`) — index/store/show/update/destroy
