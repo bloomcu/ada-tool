@@ -135,6 +135,11 @@ auth + organization access layer from `routes/base/api.php`.
 - [x] Register (`AuthRegisterController`) — creates org+user+token (pwned faked), dup email/weak pw/missing fields
 - [x] Password forgot / reset (`AuthPasswordForgot/ResetController`) — neutral forgot, reset via broker token, invalid token 422
 
+**Access control (write-protection)** — view/read is intentionally open (public); only mutations are gated.
+- [x] Logged-out users cannot mutate: site update/destroy, scan initiate, page rescan, and the two
+      mutating GET imports (`scan import`, `rescan import`) all assert `assertUnauthorized` + no data change.
+- Note: cross-org **read** is intentionally unrestricted (public launch-dashboard style) — not a bug.
+
 **Organizations (`app/Http/Base/Organizations/*`)** — scans/sites are scoped by org slug
 - [ ] Organization CRUD (`OrganizationController`) — index/store/show/update/destroy
 - [ ] Slug resolution + auth boundary (unauthed → 401)
