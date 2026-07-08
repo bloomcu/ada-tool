@@ -28,19 +28,14 @@ Found by writing the tests below; not yet fixed (tests document current behavior
 - [ ] **Scan POST response omits `status`.** The controller returns the unrefreshed
   model, so the DB default (`'READY'`) isn't in the JSON response (the row has it).
   Fix with `$scan->refresh()` before returning, if the client needs status immediately.
-- [ ] **`ScanImportController@importPage` crashes on an empty rescan dataset.**
-  `$dataset = $dataset[0]` ([line 120](app/Http/Scans/ScanImportController.php#L120))
-  assumes the rescan produced ≥1 crawled page, throwing "Undefined array key 0" when
-  the Apify dataset is empty (rescan not finished, or all items filtered out as
-  PDFs/images/no-url). Unlike `import()` which iterates (empty-safe), this hard-indexes
-  `[0]`. Guard for `empty($dataset[0])` and bail cleanly (e.g. 422). Seen in prod
-  2026-07-07.
-- [ ] **`ScanImportController@importPage` unguarded results decode.** Right after the
-  above, `json_decode($dataset['results'], true)` → `foreach ($results['rule_results'] …)`
-  ([lines 122–124](app/Http/Scans/ScanImportController.php#L122)) assumes `results` and
-  `rule_results` are present. Guard for missing/`null` before the loop — this is the
-  next crash after line 120 is fixed. (Same shape applies in `import()` at
-  [lines 42/49](app/Http/Scans/ScanImportController.php#L42).)
+- [x] **`ScanImportController@importPage` crashes on an empty rescan dataset.** ~~Seen in
+  prod 2026-07-07.~~ **Fixed** (commit `9e8320f`): guards `empty($dataset[0])` → 422.
+  Covered by `ScanImportControllerTest`.
+- [x] **`ScanImportController@importPage` unguarded `rule_results` decode.** **Fixed** in
+  the same commit with `?? []`, tested. NOTE: `import()` still has the same shape at
+  [lines 42/49](app/Http/Scans/ScanImportController.php#L42) — not yet guarded (the
+  bulk import's per-item `results`/`rule_results` are assumed present); low priority since
+  our dataset always includes them, but worth a `?? []` for defense.
 
 ---
 
@@ -63,7 +58,7 @@ auth + organization access layer from `routes/base/api.php`.
 - [x] Site scan trigger (`SiteScanController@store`) — Apify faked, persists run, forwards 3pi flag, auth required
 - [x] Page rescan (`PageScanController@store`) — Apify faked, single-page scan, links rescan_id, no enqueue, auth required
 - [x] Scan status (`Scans/StatusController@show`) — Apify faked, persists status, org scoping
-- [ ] Scan import (`ScanImportController@import` / `@importPage`) — Apify dataset → Evaluations/Pages
+- [x] Scan import (`ScanImportController@import` / `@importPage`) — Apify dataset → Pages, tallies, empty-dataset guards
 - [ ] Abort run (`AbortRunController@abortRun`) — blocked: see misconfigured routes below
 - [ ] DataSet retrieval (`DataSetController`) — blocked: see misconfigured routes below
 
