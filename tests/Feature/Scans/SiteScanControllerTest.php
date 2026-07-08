@@ -78,11 +78,13 @@ class SiteScanControllerTest extends TestCase
 
         $this->postJson("/api/{$organization->slug}/sites/{$site->id}/scan")->assertCreated();
 
-        // The controller passes $site->include_3pi through as the actor's
-        // ignoreKnown3pi flag, and always enqueues links.
+        // runActor sends ignoreKnown3pi as the NEGATION of the site's include_3pi
+        // (see ApifyADAScanner: 'ignoreKnown3pi' => !$include3pi). So a site with
+        // include_3pi = false must tell Apify to ignore known 3pi (true), and links
+        // are always enqueued for a full site scan.
         Http::assertSent(function ($request) use ($site) {
             return str_contains($request->url(), 'api.apify.com/v2/acts')
-                && $request['ignoreKnown3pi'] === false
+                && $request['ignoreKnown3pi'] === true
                 && $request['shouldEnqueueLinks'] === true
                 && $request['startUrls'] === [['url' => 'https://' . $site->domain . '/']];
         });
