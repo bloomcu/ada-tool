@@ -77,7 +77,8 @@ and `importPage` falls through — self-heals in ~a year, leaving a dangling `re
 - [x] Add model factories for the product/base Eloquent models — Organization, User, Site,
       Scan, Page, Evaluation (fixed resolution: they were misplaced + used the removed `factory()` helper)
 - [~] Add fake/mocks for external services: Apify (done, via `Http::fake()`), Pusher, Mailgun
-- [ ] CI step to run `php artisan test` on every push (gate the upgrade PRs)
+- [ ] CI step to run `php artisan test` on every push (gate the upgrade PRs) — **skipped for now**
+      (solo dev; run `sail artisan test` locally before each upgrade step). Revisit if the team grows.
 - [x] Baseline: capture current pass state on Laravel 9 — **green**, 5/5 in `OrganizationTest`
       (`sail artisan test --testsuite Unit`). The suite had never run before this.
 
