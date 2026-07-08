@@ -59,15 +59,23 @@ Covers the real product surface in `routes/api.php` (scans/sites/pages) plus the
 auth + organization access layer from `routes/base/api.php`.
 
 **Scans (`app/Http/Scans/*`)** — core product domain, highest priority
-- [ ] Public scan trigger (`ScanController@store`) — the unauthed `GET /scans` entry point
 - [x] List / show scan (`ScanController@index/@show`) — org-scoped, authed vs public
 - [x] Site scan trigger (`SiteScanController@store`) — Apify faked, persists run, forwards 3pi flag, auth required
-- [ ] Page rescan (`PageScanController@store`)
-- [ ] Abort run (`AbortRunController@abortRun`) — Apify faked
-- [ ] Scan import (`ScanImportController@import` / `@importPage`) — Apify dataset → Evaluations
-- [ ] Scan status (`Scans/StatusController@status/@show`) — evaluation status transitions
-- [ ] DataSet retrieval (`DataSetController@dataset/@show`) — Apify faked
-- [x] Org scoping / `scopeBindings` — scan under wrong org slug 404s
+- [x] Page rescan (`PageScanController@store`) — Apify faked, single-page scan, links rescan_id, no enqueue, auth required
+- [x] Scan status (`Scans/StatusController@show`) — Apify faked, persists status, org scoping
+- [ ] Scan import (`ScanImportController@import` / `@importPage`) — Apify dataset → Evaluations/Pages
+- [ ] Abort run (`AbortRunController@abortRun`) — blocked: see misconfigured routes below
+- [ ] DataSet retrieval (`DataSetController`) — blocked: see misconfigured routes below
+
+> **Misconfigured legacy routes (in `routes/api.php`, need triage before testing):**
+> These reference controller methods that don't exist or bind the wrong model, so they
+> would 500 on any request — not simple guard bugs, they need wiring decisions.
+> - `GET /scans` → `ScanController@store` — no `store()` method exists (only index/show).
+> - `GET /scans/{scan}/dataset` → `DataSetController@show` — only `dataset()` exists.
+> - `GET /scans/{scan}/abort` → `AbortRunController@abortRun(…, Evaluation $evaluation)` —
+>   route param is `{scan}` but the method expects `$evaluation`; name mismatch means the
+>   id never binds. Same pattern on the unauthed `/scans/status/{evaluation}` group.
+> Decide per route: delete if dead, or fix the method/binding. Confirm against frontend usage first.
 
 **Sites & Pages (`app/Http/Sites/*`, `app/Http/Pages/*`)** — authed, org-scoped
 - [ ] Site CRUD (`SiteController`) — validates against `SiteStoreRequest` / `SiteUpdateRequest`
