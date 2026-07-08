@@ -180,8 +180,11 @@ These wrap third-party APIs and are the most fragile across a framework upgrade.
 - [ ] Helpers, Traits, Scopes (`app/App/*`)
 
 ### 5. Console / scheduled tasks  (P1)
-- [ ] Scheduled scan command(s) — dispatches `ScheduledScanStarted`, respects schedule
-- [ ] Any `routes/console.php` commands
+- [x] `scans:run-scheduled` — scans due quarterly sites, advances next_scan_at, notifies per
+      recipient, --dry-run has no side effects, Apify failure contained (command survives).
+      Covers `ScheduledScanStarted` mail dispatch + `ScanScheduleService` transitively.
+      (`RunScheduledScansTest`)
+- [ ] `CountUsers` command / `routes/console.php` — trivial, not product-critical; skip unless needed
 
 ---
 
