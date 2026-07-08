@@ -20,11 +20,11 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · **P0** must-have before
 
 ## Bugs surfaced while writing tests
 Found by writing the tests below; not yet fixed (tests document current behavior).
-- [ ] **`SiteScanController@store` creates the scan twice.** Two identical
-  `$site->scans()->create([...])` calls run back-to-back (the first uses
-  `$site->organization_id`, the second `$organization->id`); only the second is
-  returned. Every site scan writes a duplicate row. Almost certainly a copy-paste
-  leftover — delete the first `create()`.
+- [x] **`SiteScanController@store` creates the scan twice.** **Fixed** (commit `d928e76`):
+  the duplicate `create()` (paste leftover from `1248df7`, 2026-03-04) is removed; kept the
+  `$site->organization_id` block. Locked with `assertDatabaseCount('scans', 1)`. Apify was
+  only ever called once. **Prod cleanup:** deployed since 2026-03-04, so existing rows may
+  have twins — de-dupe with `GROUP BY site_id, run_id HAVING COUNT(*) > 1`.
 - [ ] **Scan POST response omits `status`.** The controller returns the unrefreshed
   model, so the DB default (`'READY'`) isn't in the JSON response (the row has it).
   Fix with `$scan->refresh()` before returning, if the client needs status immediately.
