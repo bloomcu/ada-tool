@@ -188,6 +188,16 @@ These wrap third-party APIs and are the most fragile across a framework upgrade.
 
 ---
 
+## Upgrade progress (branch `upgrade/laravel`)
+- [x] Pre-upgrade cleanup (cloudinary, CDN, medialibrary) — done
+- [x] **Laravel 9 → 10** — framework 10.50, sanctum 3, cashier 15, phpunit 10; suite green (61).
+      Only test-level fix needed (3pi assertion); no product code changes.
+- [ ] **Laravel 10 → 11** — next. Note: L11 slims the skeleton (no `Http/Kernel`, `bootstrap/app.php`
+      routing) — can keep the L10 structure; also drops `laravel-ignition` (merged into framework).
+- [ ] **Laravel 11 → 12** — small delta over 11.
+
+---
+
 ## Pre-upgrade cleanup — remove dead / scaffold dependencies  (do FIRST)
 
 Verified against the codebase (2026-07-03). Removing these shrinks the Laravel 9→12
