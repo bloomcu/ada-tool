@@ -28,6 +28,19 @@ Found by writing the tests below; not yet fixed (tests document current behavior
 - [ ] **Scan POST response omits `status`.** The controller returns the unrefreshed
   model, so the DB default (`'READY'`) isn't in the JSON response (the row has it).
   Fix with `$scan->refresh()` before returning, if the client needs status immediately.
+- [ ] **`ScanImportController@importPage` crashes on an empty rescan dataset.**
+  `$dataset = $dataset[0]` ([line 120](app/Http/Scans/ScanImportController.php#L120))
+  assumes the rescan produced ≥1 crawled page, throwing "Undefined array key 0" when
+  the Apify dataset is empty (rescan not finished, or all items filtered out as
+  PDFs/images/no-url). Unlike `import()` which iterates (empty-safe), this hard-indexes
+  `[0]`. Guard for `empty($dataset[0])` and bail cleanly (e.g. 422). Seen in prod
+  2026-07-07.
+- [ ] **`ScanImportController@importPage` unguarded results decode.** Right after the
+  above, `json_decode($dataset['results'], true)` → `foreach ($results['rule_results'] …)`
+  ([lines 122–124](app/Http/Scans/ScanImportController.php#L122)) assumes `results` and
+  `rule_results` are present. Guard for missing/`null` before the loop — this is the
+  next crash after line 120 is fixed. (Same shape applies in `import()` at
+  [lines 42/49](app/Http/Scans/ScanImportController.php#L42).)
 
 ---
 
