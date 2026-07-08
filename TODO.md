@@ -76,6 +76,21 @@ auth + organization access layer from `routes/base/api.php`.
 >   route param is `{scan}` but the method expects `$evaluation`; name mismatch means the
 >   id never binds. Same pattern on the unauthed `/scans/status/{evaluation}` group.
 > Decide per route: delete if dead, or fix the method/binding. Confirm against frontend usage first.
+>
+> **Triage findings (root cause — a half-finished `Evaluation` → `Scan` migration):**
+> The app originally modeled a crawl as `Evaluation`; it was refactored to `Scan`
+> (same columns + `organization_id`). **Nothing creates `Evaluation` records anymore**
+> — the model and its relations (`Site->evaluations()`, `Page->evaluation()` on a dropped
+> column) are orphaned. `StatusController` was migrated (new `show(Organization, Scan)`);
+> `AbortRun`/`DataSet` were not, so their Scan routes point at missing/mismatched methods.
+> - **DataSet** (`getDataset($dataset_id)` raw passthrough): **mostly redundant** — the
+>   real work (dataset → `Page` rows) is done by `ScanImportController@import`, and the UI
+>   reads the persisted pages. Likely **delete the route** unless a live raw-preview UI exists.
+> - **Abort** (`abortRun($run_id)`): **unique capability, currently unreachable** (Scan route
+>   500s; only the dead Evaluation route "works"). Keep only if the UI has a cancel button —
+>   then it's a 2-line Scan-based method mirroring `StatusController@show`; else delete.
+> - **Cleanup**: the legacy Evaluation-based routes + the `Evaluation` model are dead and
+>   removable. **Deciding input:** grep the frontend for `/abort` and `/dataset` calls.
 
 **Sites & Pages (`app/Http/Sites/*`, `app/Http/Pages/*`)** — authed, org-scoped
 - [ ] Site CRUD (`SiteController`) — validates against `SiteStoreRequest` / `SiteUpdateRequest`
