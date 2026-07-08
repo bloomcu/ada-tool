@@ -45,6 +45,10 @@ class SiteScanControllerTest extends TestCase
             ->assertJsonPath('data.queue_id', 'queue-123')
             ->assertJsonPath('data.dataset_id', 'dataset-123');
 
+        // Exactly one scan row is created (guards against the double-create
+        // regression where two identical rows were persisted per site scan).
+        $this->assertDatabaseCount('scans', 1);
+
         // Note: the response omits `status` (the controller returns the
         // unrefreshed model, so the DB default isn't loaded yet) — but the
         // persisted row carries the default 'READY'.
