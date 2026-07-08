@@ -194,14 +194,12 @@ Verified against the codebase (2026-07-03). Removing these shrinks the Laravel 9
 surface area — three of them were the worst breaking-change offenders in the upgrade.
 Do this **before** writing the upgrade PRs; fewer packages = fewer things to break.
 
-- [ ] **`cloudinary-labs/cloudinary-laravel` — DEAD, drop outright.**
-  Only referenced in `composer.json`. No code, no config, no published `config/cloudinary.php`.
-  → `composer remove cloudinary-labs/cloudinary-laravel`. Zero code changes.
+- [x] **`cloudinary-labs/cloudinary-laravel` — DONE** (commit before 9→10). Removed via
+  `composer remove`; nothing referenced it. Suite green after.
 
-- [ ] **`DigitalOceanCDNService` / `CDNInterface` — DEAD internal code, delete.**
-  Binding commented out in `AppServiceProvider:38`; nothing resolves it. Only live
-  trace is `config('cdn.cdn_url')` inside the scaffold `File` model accessor.
-  → Delete `app/App/Services/CDN/`, `config/cdn.php` (goes with the Files scaffold below).
+- [x] **`DigitalOceanCDNService` / `CDNInterface` — DONE.** Deleted the dead classes +
+  commented refs in `AppServiceProvider`. Kept `config/cdn.php` (scaffold `File` model still
+  reads `config('cdn.cdn_url')`) — remove it if/when the Files scaffold goes.
 
 - [ ] **`spatie/laravel-medialibrary` — scaffold-only, removable (light surgery).**
   Used by `Media` model (extends Spatie `BaseMedia`) + `MediaController@addMedia` +
