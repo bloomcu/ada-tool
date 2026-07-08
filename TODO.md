@@ -201,12 +201,11 @@ Do this **before** writing the upgrade PRs; fewer packages = fewer things to bre
   commented refs in `AppServiceProvider`. Kept `config/cdn.php` (scaffold `File` model still
   reads `config('cdn.cdn_url')`) — remove it if/when the Files scaffold goes.
 
-- [ ] **`spatie/laravel-medialibrary` — scaffold-only, removable (light surgery).**
-  Used by `Media` model (extends Spatie `BaseMedia`) + `MediaController@addMedia` +
-  `config/media-library.php`. Already commented out on the `Organization` model. No
-  scan/site/page code touches it.
-  → Delete `app/Domain/Base/Media/`, `app/Http/Base/Media/`, media routes, config;
-  then `composer remove spatie/laravel-medialibrary`.
+- [x] **`spatie/laravel-medialibrary` — DONE.** Removed the package + Media scaffold
+  (`app/Domain/Base/Media/`, `app/Http/Base/Media/`, media routes, `config/media-library.php`)
+  and stale commented refs in Organization/File. Suite green (61), `route:list` clean.
+  Kept the `media` table migrations (inert unused table) to avoid prod migration-state drift —
+  drop them in a later cleanup migration if desired.
 
 - [ ] **`laravel/cashier` — scaffold routes, but LIVE on the auth path (moderate surgery).**
   Coupled to `Organization` via the `Billable` trait, `Cashier::useCustomerModel()` in
