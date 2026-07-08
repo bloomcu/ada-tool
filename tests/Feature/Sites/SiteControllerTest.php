@@ -168,4 +168,29 @@ class SiteControllerTest extends TestCase
 
         $this->assertDatabaseMissing('sites', ['id' => $site->id]);
     }
+
+    /** @test */
+    public function update_requires_authentication()
+    {
+        $organization = Organization::factory()->create();
+        $site = Site::factory()->create(['organization_id' => $organization->id, 'title' => 'Untouched']);
+
+        // No acting user.
+        $this->putJson("/api/{$organization->slug}/sites/{$site->id}", ['title' => 'Hacked'])
+            ->assertUnauthorized();
+
+        $this->assertDatabaseHas('sites', ['id' => $site->id, 'title' => 'Untouched']);
+    }
+
+    /** @test */
+    public function destroy_requires_authentication()
+    {
+        $organization = Organization::factory()->create();
+        $site = Site::factory()->create(['organization_id' => $organization->id]);
+
+        $this->deleteJson("/api/{$organization->slug}/sites/{$site->id}")
+            ->assertUnauthorized();
+
+        $this->assertDatabaseHas('sites', ['id' => $site->id]);
+    }
 }

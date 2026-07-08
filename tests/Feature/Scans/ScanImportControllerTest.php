@@ -219,4 +219,49 @@ class ScanImportControllerTest extends TestCase
             'rescan_id' => $page->rescan_id,
         ]);
     }
+
+    /** @test */
+    public function import_requires_authentication()
+    {
+        // These GET routes mutate (create pages / update scan counts), so a
+        // logged-out request must be rejected before any work happens.
+        $organization = Organization::factory()->create();
+        $site = Site::factory()->create(['organization_id' => $organization->id]);
+        $scan = Scan::factory()->create([
+            'organization_id' => $organization->id,
+            'site_id' => $site->id,
+        ]);
+
+        // No acting user.
+        $this->getJson("/api/{$organization->slug}/scans/{$scan->id}/import")
+            ->assertUnauthorized();
+
+        $this->assertDatabaseCount('pages', 0);
+    }
+
+    /** @test */
+    public function import_page_requires_authentication()
+    {
+        $organization = Organization::factory()->create();
+        $site = Site::factory()->create(['organization_id' => $organization->id]);
+        $scan = Scan::factory()->create([
+            'organization_id' => $organization->id,
+            'site_id' => $site->id,
+        ]);
+        $rescan = Scan::factory()->create([
+            'organization_id' => $organization->id,
+            'site_id' => $site->id,
+            'is_single_page' => true,
+        ]);
+        $page = Page::factory()->create([
+            'scan_id' => $scan->id,
+            'rescan_id' => $rescan->id,
+        ]);
+
+        $this->getJson("/api/{$organization->slug}/sites/{$site->id}/scans/{$scan->id}/page/{$page->id}/rescan/import")
+            ->assertUnauthorized();
+
+        // The page's rescan link is untouched.
+        $this->assertDatabaseHas('pages', ['id' => $page->id, 'rescan_id' => $rescan->id]);
+    }
 }
