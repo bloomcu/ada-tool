@@ -14,15 +14,8 @@ class SiteScanController extends Controller
     {
         $actor = $apifyService->runActor('https://' . $site->domain, true, $site->include_3pi);
 
-         $scan = $site->scans()->create([
-            'organization_id' => $site->organization_id,
-            'run_id'          => $actor['run_id'],
-            'queue_id'        => $actor['queue_id'],
-            'dataset_id'      => $actor['dataset_id'],
-        ]);
-
         $scan = $site->scans()->create([
-            'organization_id' => $organization->id,
+            'organization_id' => $site->organization_id,
             'run_id'          => $actor['run_id'],
             'queue_id'        => $actor['queue_id'],
             'dataset_id'      => $actor['dataset_id'],

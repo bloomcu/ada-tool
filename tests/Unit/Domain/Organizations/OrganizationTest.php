@@ -5,18 +5,13 @@ namespace Tests\Unit\Domain\Organizations;
 use Tests\TestCase;
 
 // Models
-use DDD\Domain\Base\Organizations\Organization;
+use DDD\Domain\Organizations\Organization;
 use DDD\Domain\Base\Users\User;
-use DDD\Domain\Base\Teams\Team;
-use DDD\Domain\Base\Media\Media;
+use DDD\Domain\Sites\Site;
+use DDD\Domain\Scans\Scan;
 
 class OrganizationTest extends TestCase
 {
-    public function setUp(): void
-    {
-        parent::setUp();
-    }
-
     /** @test */
     public function it_has_a_slug()
     {
@@ -26,11 +21,13 @@ class OrganizationTest extends TestCase
     }
 
     /** @test */
-    public function it_uses_the_slug_for_the_route_key_name()
+    public function it_generates_a_slug_from_its_title()
     {
-        $organization = Organization::factory()->create();
+        $organization = Organization::factory()->create([
+            'title' => 'Acme Federal Credit Union',
+        ]);
 
-        $this->assertEquals($organization->getRouteKeyName(), 'slug');
+        $this->assertEquals('acme-federal-credit-union', $organization->slug);
     }
 
     /** @test */
@@ -44,22 +41,25 @@ class OrganizationTest extends TestCase
     }
 
     /** @test */
-    public function it_has_many_teams()
+    public function it_has_many_sites()
     {
         $organization = Organization::factory()
-            ->has(Team::factory())
+            ->has(Site::factory())
             ->create();
 
-        $this->assertInstanceOf(Team::class, $organization->teams->first());
+        $this->assertInstanceOf(Site::class, $organization->sites->first());
     }
 
     /** @test */
-    public function it_has_many_media()
+    public function it_has_many_scans()
     {
-        $organization = Organization::factory()
-            ->has(Media::factory())
-            ->create();
+        $organization = Organization::factory()->create();
+        $site = Site::factory()->for($organization)->create();
+        Scan::factory()->create([
+            'organization_id' => $organization->id,
+            'site_id' => $site->id,
+        ]);
 
-        $this->assertInstanceOf(Media::class, $organization->media->first());
+        $this->assertInstanceOf(Scan::class, $organization->scans->first());
     }
 }

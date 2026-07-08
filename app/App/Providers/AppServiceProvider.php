@@ -10,12 +10,6 @@ use Laravel\Cashier\Cashier;
 // Domains
 use DDD\Domain\Base\Organizations\Organization;
 
-// Interfaces
-// use DDD\App\Services\CDN\CDNInterface;
-
-// Services
-// use DDD\App\Services\CDN\DigitalOceanCDNService;
-
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -35,7 +29,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        // $this->app->bind(CDNInterface::class, DigitalOceanCDNService::class);
         Cashier::useCustomerModel(Organization::class);
     }
 }

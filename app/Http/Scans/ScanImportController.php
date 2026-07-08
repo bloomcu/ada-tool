@@ -117,11 +117,21 @@ class ScanImportController extends Controller
 
             $dataset = $apifyService->getDataset($rescan->dataset_id, 20);
             $dataset = json_decode($dataset, true);
+
+            // The rescan may not have produced any crawlable page yet (run not
+            // finished, or the only URL was filtered out as a PDF/image). Bail
+            // cleanly instead of indexing into an empty dataset.
+            if (empty($dataset[0])) {
+                return response()->json([
+                    'message' => 'Rescan produced no results yet. Please try again once the scan completes.',
+                ], 422);
+            }
+
             $dataset = $dataset[0];
-            
+
             $results = json_decode($dataset['results'], true);
 
-            foreach($results['rule_results'] as
+            foreach(($results['rule_results'] ?? []) as
                     [
                         "elements_violation" => $elements_violation,
                         "elements_warning"=> $elements_warning
