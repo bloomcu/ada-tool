@@ -11,8 +11,6 @@ use DDD\Domain\Base\Subscriptions\Plans\Plan;
 // Vendors
 use Laravel\Cashier\Billable;
 use Laravel\Cashier\Subscription;
-// use Spatie\MediaLibrary\HasMedia;
-// use Spatie\MediaLibrary\InteractsWithMedia;
 
 // Traits
 use DDD\App\Traits\HasComments;
@@ -22,7 +20,6 @@ class Organization extends Model
 {
     use HasFactory,
         Billable,
-        // InteractsWithMedia,
         HasComments,
         HasSlug;
 
