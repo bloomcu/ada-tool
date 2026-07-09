@@ -192,9 +192,16 @@ These wrap third-party APIs and are the most fragile across a framework upgrade.
 - [x] Pre-upgrade cleanup (cloudinary, CDN, medialibrary) — done
 - [x] **Laravel 9 → 10** — framework 10.50, sanctum 3, cashier 15, phpunit 10; suite green (61).
       Only test-level fix needed (3pi assertion); no product code changes.
-- [ ] **Laravel 10 → 11** — next. Note: L11 slims the skeleton (no `Http/Kernel`, `bootstrap/app.php`
-      routing) — can keep the L10 structure; also drops `laravel-ignition` (merged into framework).
-- [ ] **Laravel 11 → 12** — small delta over 11.
+      Runtime: needed a backfill migration for `personal_access_tokens.expires_at` (Sanctum 2→3).
+- [x] **Laravel 10 → 11** — framework 11.54, sanctum 4, symfony 7, carbon 3, query-builder 6;
+      suite green (61) + smoke-tested. Kept L10 skeleton (no forced migration). Removed
+      laravel-ignition. **Published the Sanctum create_personal_access_tokens migration**
+      (Sanctum 4 publishes instead of auto-loading — required for fresh `migrate`).
+- [ ] **Laravel 11 → 12** — small delta over 11. Watch: sanctum/cashier already current;
+      mainly framework ^12, phpunit ^11, collision ^8 stays, carbon 3 stays.
+
+**Deployment note:** staging/prod need `php artisan migrate` (adds `expires_at`); the published
+sanctum create migration is skipped on DBs that already ran it.
 
 ---
 
