@@ -11,11 +11,8 @@ class Evaluation extends Model
 {
     use HasFactory;
     
-    protected $fillable = [
-        'site_id',
-        'run_id',
-        'queue_id',
-        'results_id'
+    protected $guarded = [
+        'id',
     ];
 
     public function site() {
