@@ -197,11 +197,17 @@ These wrap third-party APIs and are the most fragile across a framework upgrade.
       suite green (61) + smoke-tested. Kept L10 skeleton (no forced migration). Removed
       laravel-ignition. **Published the Sanctum create_personal_access_tokens migration**
       (Sanctum 4 publishes instead of auto-loading — required for fresh `migrate`).
-- [ ] **Laravel 11 → 12** — small delta over 11. Watch: sanctum/cashier already current;
-      mainly framework ^12, phpunit ^11, collision ^8 stays, carbon 3 stays.
+- [x] **Laravel 11 → 12** — framework 12.63, phpunit 11, collision 8.9, staudenmeir 1.25.
+      Researched upfront (guide + migration-publisher audit): **no migrations, no publish, no
+      config, no code changes**. sanctum/cashier already L12-ready (didn't bump). Suite green (61)
+      + smoke-tested. `migrate` = "Nothing to migrate".
 
-**Deployment note:** staging/prod need `php artisan migrate` (adds `expires_at`); the published
-sanctum create migration is skipped on DBs that already ran it.
+**🎉 Upgrade chain complete: Laravel 9 → 12 on branch `upgrade/laravel`.**
+
+**Deployment note:** staging/prod need `php artisan migrate` for the two Sanctum-related migrations
+added during 9→10 and 10→11 (`add_expires_at_to_personal_access_tokens`, and the published
+`create_personal_access_tokens_table` which is skipped where already run). The 11→12 step itself
+adds nothing new to migrate.
 
 ---
 
