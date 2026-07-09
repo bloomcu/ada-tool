@@ -188,6 +188,29 @@ These wrap third-party APIs and are the most fragile across a framework upgrade.
 
 ---
 
+## Upgrade progress (branch `upgrade/laravel`)
+- [x] Pre-upgrade cleanup (cloudinary, CDN, medialibrary) — done
+- [x] **Laravel 9 → 10** — framework 10.50, sanctum 3, cashier 15, phpunit 10; suite green (61).
+      Only test-level fix needed (3pi assertion); no product code changes.
+      Runtime: needed a backfill migration for `personal_access_tokens.expires_at` (Sanctum 2→3).
+- [x] **Laravel 10 → 11** — framework 11.54, sanctum 4, symfony 7, carbon 3, query-builder 6;
+      suite green (61) + smoke-tested. Kept L10 skeleton (no forced migration). Removed
+      laravel-ignition. **Published the Sanctum create_personal_access_tokens migration**
+      (Sanctum 4 publishes instead of auto-loading — required for fresh `migrate`).
+- [x] **Laravel 11 → 12** — framework 12.63, phpunit 11, collision 8.9, staudenmeir 1.25.
+      Researched upfront (guide + migration-publisher audit): **no migrations, no publish, no
+      config, no code changes**. sanctum/cashier already L12-ready (didn't bump). Suite green (61)
+      + smoke-tested. `migrate` = "Nothing to migrate".
+
+**🎉 Upgrade chain complete: Laravel 9 → 12 on branch `upgrade/laravel`.**
+
+**Deployment note:** staging/prod need `php artisan migrate` for the two Sanctum-related migrations
+added during 9→10 and 10→11 (`add_expires_at_to_personal_access_tokens`, and the published
+`create_personal_access_tokens_table` which is skipped where already run). The 11→12 step itself
+adds nothing new to migrate.
+
+---
+
 ## Pre-upgrade cleanup — remove dead / scaffold dependencies  (do FIRST)
 
 Verified against the codebase (2026-07-03). Removing these shrinks the Laravel 9→12
