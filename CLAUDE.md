@@ -214,6 +214,11 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 
 # Project Context
 
+> **Maintenance:** Keep this section current. When you discover a durable quirk,
+> convention, gotcha, or structural fact about this codebase, add or update it
+> here (below the Boost markers) as part of the same change — don't wait to be
+> asked. Prefer editing an existing bullet over appending duplicates.
+
 ## What this app is
 
 An **ADA / web-accessibility scanning tool** (backend API). It crawls a customer's
