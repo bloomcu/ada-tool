@@ -50,8 +50,9 @@ class PageIssueFormatter
     public function format(array $results): array
     {
         $issues = (new Collection($results['rule_results'] ?? []))
-            ->filter(fn (array $rule): bool => ($rule['elements_violation'] ?? 0) > 0
-                || ($rule['elements_warning'] ?? 0) > 0)
+            ->filter(fn ($rule): bool => is_array($rule)
+                && (($rule['elements_violation'] ?? 0) > 0
+                    || ($rule['elements_warning'] ?? 0) > 0))
             ->map(fn (array $rule): array => $this->formatRule($rule))
             ->sortByDesc('elements_violation')
             ->values()
@@ -72,7 +73,7 @@ class PageIssueFormatter
     private function formatRule(array $rule): array
     {
         $failing = (new Collection($rule['element_results'] ?? []))
-            ->filter(fn (array $element): bool => isset(
+            ->filter(fn ($element): bool => is_array($element) && isset(
                 self::FAILING_SEVERITIES[$element['result_value_nls'] ?? null]
             ))
             ->values();

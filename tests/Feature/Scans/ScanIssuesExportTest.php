@@ -100,6 +100,22 @@ class ScanIssuesExportTest extends TestCase
     }
 
     /** @test */
+    public function it_handles_a_page_whose_results_decodes_to_a_non_array()
+    {
+        $scan = Scan::factory()->create();
+        // Stored JSON that decodes to a string, not the expected object/array.
+        Page::factory()->create([
+            'scan_id' => $scan->id,
+            'results' => json_encode('just a string'),
+        ]);
+
+        $out = (new ScanIssuesExport())->export($scan);
+
+        $this->assertSame(0, $out['scan']['pages_with_issues']);
+        $this->assertSame([], $out['pages']);
+    }
+
+    /** @test */
     public function it_returns_an_empty_pages_list_for_a_scan_with_no_issues()
     {
         $scan = Scan::factory()->create();

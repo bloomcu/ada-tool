@@ -81,7 +81,7 @@ class ScanIssuesExport
      */
     private function exportPage(Page $page): array
     {
-        $results = $page->results ?? [];
+        $results = is_array($page->results) ? $page->results : [];
         $formatted = $this->formatter->format($results);
 
         return [
