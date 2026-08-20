@@ -3,6 +3,9 @@
 Legend: `[ ]` todo · `[~]` in progress · `[x]` done · **P0** must-have ·
 **P1** should-have · **P2** nice-to-have
 
+> **Plans:** design docs for the scan-issues export / reporting work live in
+> [`docs/Plan.md`](docs/Plan.md) and [`docs/Plan-reports.md`](docs/Plan-reports.md).
+
 ---
 
 ## CURRENT: Secured MCP server exposing accessibility scan data  (in progress)
