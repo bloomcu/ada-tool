@@ -201,3 +201,92 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - To filter on a particular test name: `vendor/bin/sail artisan test --compact --filter=testName` (recommended after making a change to a related file).
 
 </laravel-boost-guidelines>
+
+<!--
+  ============================================================================
+  PROJECT CONTEXT — hand-maintained, NOT managed by Laravel Boost.
+  Boost only regenerates content BETWEEN the <laravel-boost-guidelines> tags
+  above (see GuidelineWriter regex), so anything below this line survives
+  `boost:install` / Boost updates. Keep durable product knowledge here to
+  avoid re-investigating the codebase each session.
+  ============================================================================
+-->
+
+# Project Context
+
+> **Maintenance:** Keep this section current. When you discover a durable quirk,
+> convention, gotcha, or structural fact about this codebase, add or update it
+> here (below the Boost markers) as part of the same change — don't wait to be
+> asked. Prefer editing an existing bullet over appending duplicates.
+
+## What this app is
+
+An **ADA / web-accessibility scanning tool** (backend API). It crawls a customer's
+website, runs accessibility (WCAG/ADA) checks against each page, and stores the
+resulting violations so they can be reviewed and remediated. The frontend is a
+separate application; this repo is the Laravel API.
+
+## Architecture
+
+- **Domain-Driven Design layout.** The `DDD\` PSR-4 namespace maps to `app/`
+  (see `composer.json` autoload). This is intentional and predates the Laravel 12
+  upgrade — do **not** "fix" it to the default `App\` structure.
+- Top-level `app/` splits into:
+  - `app/Domain/` — domain models + their Resources/Requests/Mail, one folder per
+    aggregate (`Organizations`, `Sites`, `Scans`, `Pages`, `Evaluations`, `Base`).
+  - `app/Http/` — controllers grouped by domain (`Http/Sites`, `Http/Scans`,
+    `Http/Pages`), middleware, and `Http/Base` (auth controllers live here).
+  - `app/App/` — cross-cutting: `Services`, `Providers`, `Policies`, `Events`,
+    `Console`, `Helpers`, `Scopes`, `Traits`.
+- Laravel 10-era structure (Kernel-based), retained through the 9→12 upgrade.
+  Middleware in `app/Http/Kernel.php`, not `bootstrap/app.php`.
+
+## Domain model / tenancy
+
+Multi-tenant, scoped by organization. The ownership chain:
+
+```
+Organization ──has many──> Site ──has many──> Scan ──has many──> Page
+                            │                                       ▲
+                            └──has many──> Evaluation ──has many────┘
+```
+
+- Every tenant-scoped API route is prefixed with `{organization:slug}` and uses
+  `->scopeBindings()`, so route-model binding enforces that a Site/Scan/Page
+  actually belongs to that organization. **This tenant isolation is provided by
+  routing, not by the models** — any non-HTTP entry point (jobs, commands, MCP
+  tools) must re-enforce org scoping manually via the authenticated user.
+- `Scan`, `Evaluation`, and `Page` carry the accessibility results. `Scan` and
+  `Page` are `Prunable` (scans older than 1 year are pruned).
+- `Page` can be individually re-scanned (`rescan_id` → `Scan`).
+
+## External services
+
+- **Apify** (`app/App/Services/Apify/`, bound via `ApifyServiceProvider`) is the
+  crawler/scanner engine. `ApifyADAScanner` implements `ApifyInterface`. Kicking
+  off a scan triggers an external, **billable** Apify run — treat scan-start /
+  rescan / abort as costly side effects, not cheap reads.
+
+## Auth
+
+- **Laravel Sanctum** (token-based). The app already issues personal access
+  tokens on login/registration via `createToken('auth_token')` (see
+  `app/Http/Base/Auth/*`). The `User` model (`app/Domain/Base/Users/User.php`)
+  uses `HasApiTokens`.
+- Tenant-scoped API routes sit behind `->middleware('auth:sanctum')` in
+  `routes/api.php`.
+- **Known gap:** the top-level `scans/*` routes (scan create/status/dataset/abort)
+  are currently **unauthenticated** — marked `// TODO: Can these be behind auth?`
+  in `routes/api.php`. Do not treat these as a security model to copy; new
+  surfaces (e.g. MCP) should require auth.
+
+## MCP status (as of 2026-07)
+
+- `laravel/mcp` v0.8.2 is installed, but only **transitively** via `laravel/boost`
+  (not a direct `composer.json` requirement). The MCP server currently running is
+  Boost's own dev server.
+- There is **no** `routes/ai.php` and **no** `app/Mcp/` — no custom MCP server
+  exists yet. Building one is greenfield.
+- When built, MCP tools must manually enforce the org-scoping described above
+  (flat `/mcp/...` routes have no `{organization:slug}` binding to lean on), and
+  should be protected with `->middleware('auth:sanctum')`.
