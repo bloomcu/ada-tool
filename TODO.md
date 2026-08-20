@@ -18,6 +18,9 @@ excluded from this suite. Revisit only if/when one is actually adopted.
 Legend: `[ ]` todo · `[~]` in progress · `[x]` done · **P0** must-have before upgrade ·
 **P1** should-have · **P2** nice-to-have
 
+> **Plans:** design docs for the scan-issues export / reporting work live in
+> [`docs/Plan.md`](docs/Plan.md) and [`docs/Plan-reports.md`](docs/Plan-reports.md).
+
 ## Bugs surfaced while writing tests
 Found by writing the tests below; not yet fixed (tests document current behavior).
 - [x] **`SiteScanController@store` creates the scan twice.** **Fixed** (commit `d928e76`):

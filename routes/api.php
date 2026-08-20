@@ -6,6 +6,7 @@ use DDD\Http\Sites\SiteController;
 use DDD\Http\Scans\StatusController;
 use DDD\Http\Scans\ScanImportController;
 use DDD\Http\Scans\ScanController;
+use DDD\Http\Scans\ScanIssuesExportController;
 use DDD\Http\Scans\DataSetController;
 use DDD\Http\Scans\AbortRunController;
 use DDD\Http\Pages\PageController;
@@ -56,6 +57,9 @@ Route::middleware('auth:sanctum')->group(function() {
         // Scans
         Route::prefix('scans')->group(function() {
             Route::get('/', [ScanController::class, 'index']);
+
+            // Download the scan's violations/warnings as a trimmed JSON file (for reporting)
+            Route::get('/{scan}/issues/export', [ScanIssuesExportController::class, 'download']);
 
             // Active scans
             Route::get('/{scan}/dataset', [DataSetController::class, 'show']); // Show dataset from Apify
