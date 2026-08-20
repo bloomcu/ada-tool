@@ -164,6 +164,33 @@ class PageIssueFormatterTest extends TestCase
     }
 
     /** @test */
+    public function it_skips_malformed_non_array_rule_and_element_entries()
+    {
+        // Defensive: real prod payloads may contain nulls/scalars where arrays are
+        // expected. These must be skipped, not throw a TypeError.
+        $out = $this->format([
+            'rule_results' => [
+                null,
+                'garbage',
+                [
+                    'rule_id' => 'IMAGE_1',
+                    'elements_violation' => 1,
+                    'elements_warning' => 0,
+                    'element_results' => [
+                        null,
+                        'x',
+                        ['element_identifier' => 'img: a', 'result_value_nls' => 'V'],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertSame(1, $out['issue_count']);
+        $this->assertCount(1, $out['issues'][0]['elements']);
+        $this->assertSame('img: a', $out['issues'][0]['elements'][0]['identifier']);
+    }
+
+    /** @test */
     public function it_handles_a_rule_flagged_failing_but_missing_element_results()
     {
         // Counts say it fails, but no element_results array is present.
