@@ -28,7 +28,7 @@ themselves in the CMS** vs. **what is global/template-level** (our job).
 
 ### Primary signal — cross-page recurrence (mostly free)
 
-Each issue element carries an `element_identifier` (DOM-path-ish) + id/class. Across a
+Each issue element carries an `element_identifier` (+ usually-empty id/class). Across a
 scan:
 
 - **Same `(rule_id, element_identifier)` on ~every page → global/template.** Header, nav,
@@ -39,9 +39,24 @@ scan:
 This single group-by delivers **both** scope #1 (classify) **and** scope #2 (patterns).
 It is the centerpiece — preferred over a hand-maintained "this rule is always global" list.
 
-> **Risk to validate first:** this rides on `element_identifier` being stable/comparable
-> across pages for shared template elements. Confirm with one real `results` blob before
-> trusting it (see Data needs).
+> **`element_identifier` format — CONFIRMED (2026-08-20, scan 22).** It is
+> **`"<tag>: <accessible name / text>"`** (e.g. `"a: Login"`, `"p: This is an error…"`),
+> **not** a DOM path or CSS selector — it is content/text-derived. Consequences for the
+> classifier:
+> - ✅ Template elements with stable text (nav/footer links) yield the *same* identifier on
+>   every page → recurrence detection is viable.
+> - ⚠️ **Not unique within a page** — two distinct DOM nodes with the same tag+text collapse
+>   to one identifier (observed: two `"h2: This is an h2"`). So recurrence must count
+>   **presence-per-page** (does this identifier appear on page X?), **never** raw occurrence
+>   counts.
+> - ⚠️ **id/class are usually empty** — don't rely on them for element identity.
+> - ⚠️ **Text-sensitive** — page-specific template text won't match across pages; recurrence
+>   catches *identical* text only. Rule type is the tiebreaker (structural rules lean
+>   global/dev; content rules lean CMS-editable).
+>
+> **Still unvalidated:** cross-page recurrence itself. The dev DB has **only single-page
+> scans** (QA fixtures), so clustering across pages can't be tested here — it needs a real
+> **multi-page** scan export from prod (see Data needs).
 
 ### Secondary signal — a data-first rule map
 
@@ -97,9 +112,11 @@ Prod DB is unreachable from dev (see [Plan.md](Plan.md) constraints). So:
 
 ## Data needs (only these require a human hand-off)
 
-- **[ ] One real page's `results` blob** — calibrates `element_identifier` format and locks
-  the fixtures to reality. Get via browser **Network tab** (the Vue app already fetches it)
-  or a prod `tinker` (`Page::find(<id>)->results`).
+- **[x] One real page's `results` blob** — DONE (scan 22, 2026-08-20). Confirmed
+  `element_identifier` = `"<tag>: <text>"` (see the format callout above).
+- **[ ] A real MULTI-PAGE scan export** — needed to validate cross-page recurrence; dev has
+  only single-page QA scans. Run `scans:export-issues <id>` on **prod** against a multi-page
+  site and paste the JSON.
 - **[ ] 1–2 example launch reports** — behind the login-protected Vue frontend, so paste as
   text or print-to-PDF. Redact freely; only structure/tone is needed.
 
@@ -107,8 +124,9 @@ Prod DB is unreachable from dev (see [Plan.md](Plan.md) constraints). So:
 
 - **[ ] P0** `PageIssueFormatter` extracted from `GetPageIssuesTool` (+ tests).
 - **[ ] P0** `ScanIssuesExport` aggregate over `Page::where('scan_id', …)` (+ tests).
-- **[ ] P0** Recurrence analyzer: `(rule_id, element_identifier)` frequency across pages
-  → `global | cms_editable` label + pages-affected count (+ tests).
+- **[ ] P0** Recurrence analyzer: for each `(rule_id, element_identifier)`, count
+  **distinct pages it appears on** (presence-per-page, NOT raw occurrences — identifiers are
+  non-unique within a page) → `global | cms_editable` label + pages-affected count (+ tests).
 - **[ ] P0** Rule map seeded from the trial scan's distinct `rule_id`s (doc_url + tiebreaker).
 - **[ ] P0** `scans:export-issues {scan}` command → scorecard JSON.
 - **[ ] P1** Report generator (example reports + scorecard → prose).
