@@ -31,8 +31,11 @@ class ScanResource extends JsonResource
             'pages' => $this->whenLoaded('pages', function() {
                 return $this->pages()
                     // Add RAW query to pull only eval URL param from scan
-                    ->select('id', 'title', 'violation_count', 'warning_count', 'rescan_id')
+                    ->select('id', 'title', 'violation_count', 'warning_count', 'customer_reviewable', 'rescan_id')
                     ->with('rescan')
+                    // "Review this first" pages float to the top; then worst-first by counts.
+                    // (MySQL sorts NULL last on DESC, so not-yet-backfilled pages sink.)
+                    ->orderBy('customer_reviewable', 'DESC')
                     ->orderBy('violation_count', 'DESC')
                     ->orderBy('warning_count', 'DESC')
                     ->get();

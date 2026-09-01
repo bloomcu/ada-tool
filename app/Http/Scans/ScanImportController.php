@@ -4,6 +4,7 @@ namespace DDD\Http\Scans;
 
 use DDD\Domain\Scans\Scan;
 use DDD\Domain\Pages\Page;
+use DDD\Domain\Pages\CustomerEditableRules;
 use DDD\Domain\Organizations\Organization;
 use DDD\App\Services\Apify\ApifyInterface;
 use DDD\App\Controllers\Controller;
@@ -79,7 +80,8 @@ class ScanImportController extends Controller
                     'title'   =>$entry['title'],
                     'results' =>$entry['results'],
                     'violation_count'=>$violations_count_this_page,
-                    'warning_count'=>$warnings_count_this_page
+                    'warning_count'=>$warnings_count_this_page,
+                    'customer_reviewable' => CustomerEditableRules::reviewable($results),
                 ];
                 // Log::info('usage_after_datasets: ' . memory_get_peak_usage(true));
                 $chunks = array_chunk($pages, 1);
@@ -177,6 +179,7 @@ class ScanImportController extends Controller
                     'results' =>$dataset['results'],
                     'violation_count'=>$violations_count_this_page,
                     'warning_count'=>$warnings_count_this_page,
+                    'customer_reviewable' => CustomerEditableRules::reviewable($results),
                     'rescan_id' => null
                 ];
                 $page->update($new_results);
