@@ -54,4 +54,38 @@ class CustomerEditableRules
 
         return false;
     }
+
+    /**
+     * Per-issue annotation for the page-detail view. Tags each `rule_results` entry with a
+     * `customer_reviewable` flag (a FAILING customer-editable rule) and floats those to the
+     * top. Derived on read — no persistence. Sort is stable (PHP 8+ usort), so non-flagged
+     * issues keep their original scanner order.
+     *
+     * @param  array<string, mixed>  $results  Decoded `page.results`.
+     * @return array<string, mixed>
+     */
+    public static function annotate(array $results): array
+    {
+        $rules = $results['rule_results'] ?? [];
+        if (! is_array($rules)) {
+            return $results;
+        }
+
+        foreach ($rules as &$rule) {
+            if (! is_array($rule)) {
+                continue;
+            }
+            $failing = ($rule['elements_violation'] ?? 0) > 0
+                || ($rule['elements_warning'] ?? 0) > 0;
+            $rule['customer_reviewable'] = $failing && self::has($rule['rule_id'] ?? null);
+        }
+        unset($rule);
+
+        usort($rules, fn ($a, $b): int => (int) (is_array($b) && ($b['customer_reviewable'] ?? false))
+            <=> (int) (is_array($a) && ($a['customer_reviewable'] ?? false)));
+
+        $results['rule_results'] = $rules;
+
+        return $results;
+    }
 }
