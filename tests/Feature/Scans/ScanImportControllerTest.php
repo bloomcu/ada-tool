@@ -221,6 +221,54 @@ class ScanImportControllerTest extends TestCase
     }
 
     /** @test */
+    public function it_flags_pages_with_customer_editable_issues_on_import()
+    {
+        $this->fakeApifyDataset([
+            [
+                'url' => 'https://example.com/blog', 'title' => 'Blog',
+                'results' => json_encode(['rule_results' => [
+                    ['rule_id' => 'HEADING_5', 'elements_violation' => 0, 'elements_warning' => 2],
+                ]]),
+            ],
+            [
+                'url' => 'https://example.com/widget', 'title' => 'Widget',
+                'results' => json_encode(['rule_results' => [
+                    ['rule_id' => 'WIDGET_3', 'elements_violation' => 3, 'elements_warning' => 0],
+                ]]),
+            ],
+        ]);
+
+        $organization = Organization::factory()->create();
+        $site = Site::factory()->create(['organization_id' => $organization->id]);
+        $scan = Scan::factory()->create(['organization_id' => $organization->id, 'site_id' => $site->id]);
+        Sanctum::actingAs(User::factory()->create(['organization_id' => $organization->id]));
+
+        $this->getJson("/api/{$organization->slug}/scans/{$scan->id}/import")->assertOk();
+
+        // A customer-editable rule (HEADING_5) flags the page; a structural rule (WIDGET_3) does not.
+        $this->assertDatabaseHas('pages', ['scan_id' => $scan->id, 'title' => 'Blog', 'customer_reviewable' => true]);
+        $this->assertDatabaseHas('pages', ['scan_id' => $scan->id, 'title' => 'Widget', 'customer_reviewable' => false]);
+    }
+
+    /** @test */
+    public function a_single_page_rescan_recomputes_the_customer_reviewable_flag()
+    {
+        [$url, $scan, $page] = $this->rescanImportUrl([
+            [
+                'url' => 'https://example.com/contact', 'title' => 'Contact',
+                'results' => json_encode(['rule_results' => [
+                    ['rule_id' => 'LINK_1', 'elements_violation' => 1, 'elements_warning' => 0],
+                ]]),
+            ],
+        ]);
+
+        $this->getJson($url)->assertOk();
+
+        // Rescan writes the flag in the same place it writes the counts -> stays in sync.
+        $this->assertDatabaseHas('pages', ['id' => $page->id, 'customer_reviewable' => true, 'rescan_id' => null]);
+    }
+
+    /** @test */
     public function import_requires_authentication()
     {
         // These GET routes mutate (create pages / update scan counts), so a

@@ -8,6 +8,7 @@ use DDD\Domain\Base\Users\User;
 use DDD\Domain\Organizations\Organization;
 use DDD\Domain\Sites\Site;
 use DDD\Domain\Scans\Scan;
+use DDD\Domain\Pages\Page;
 
 class ScanControllerTest extends TestCase
 {
@@ -67,6 +68,33 @@ class ScanControllerTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.id', $fullScan->id);
+    }
+
+    /** @test */
+    public function show_orders_customer_reviewable_pages_first()
+    {
+        $organization = Organization::factory()->create();
+        $site = Site::factory()->create(['organization_id' => $organization->id]);
+        $scan = Scan::factory()->create([
+            'organization_id' => $organization->id,
+            'site_id' => $site->id,
+        ]);
+
+        // Not reviewable, but MORE violations.
+        Page::factory()->create([
+            'scan_id' => $scan->id, 'title' => 'Structural',
+            'violation_count' => 50, 'warning_count' => 0, 'customer_reviewable' => false,
+        ]);
+        // Reviewable, but FEWER violations — must still come first.
+        Page::factory()->create([
+            'scan_id' => $scan->id, 'title' => 'Editable',
+            'violation_count' => 1, 'warning_count' => 0, 'customer_reviewable' => true,
+        ]);
+
+        $this->getJson("/api/{$organization->slug}/scans/{$scan->id}")
+            ->assertOk()
+            ->assertJsonPath('data.pages.0.title', 'Editable')
+            ->assertJsonPath('data.pages.1.title', 'Structural');
     }
 
     /** @test */
