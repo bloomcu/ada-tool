@@ -34,14 +34,18 @@ Existing pages stay `NULL` until re-scanned, or backfill them explicitly:
 ```bash
 php artisan pages:backfill-reviewable              # every NULL page
 php artisan pages:backfill-reviewable --scan=1909  # just one scan (good for a spot-check first)
-php artisan pages:backfill-reviewable --chunk=100  # smaller batches (default 200)
 ```
 
 Properties:
 - **Resumable** — only touches rows where `customer_reviewable IS NULL`, so re-running or
   interrupting mid-run is safe; already-done rows are skipped.
-- **Memory-bounded** — `chunkById`, selecting only `id` + `results`.
+- **Memory-safe on big scans** — streams **id-only** rows (`lazyById`) and reads each page's
+  large `results` blob **one page at a time**, so peak memory is a single page, not a whole
+  chunk of blobs. ⚠️ A chunk-of-full-rows version (`chunkById` selecting `results`) **OOM'd on
+  large scans** (512 MB) — do not reintroduce it.
 - **Non-invasive** — writes via the query builder (no `updated_at` churn, no model events).
+- `--chunk` (default 500) only tunes how many *ids* are streamed per batch; it never loads
+  results, so it's safe to leave high.
 
 ## Deploy sequence
 1. `php artisan migrate` — fast, column only.
