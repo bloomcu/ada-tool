@@ -14,6 +14,56 @@ From a scan, produce a client-facing remediation **report** that reads like the 
 clients already receive at launch — but split so a client can see **what they can fix
 themselves in the CMS** vs. **what is global/template-level** (our job).
 
+---
+
+## 📌 PINNED — next-session starting point (validated 2026-08-20 on northwoods, 262 pages)
+
+**Do next session:** (1) review the rule map in depth (Bryan owns the `tier` calls), then
+(2) implement `ScanIssueClassifier` + fold into the export/report. Model is validated; the
+work is curating the map and building it.
+
+**Classification model = three axes.** Two are a curated per-rule map, one is computed:
+1. **`cause`** (curated): `authoring` (content editor) · `structural` (dev/template markup+ARIA) · `design` (theme/CSS).
+2. **`tier`** (curated — *we* own this, the scanner can't be trusted): `ada_required` ·
+   `best_practice` · `suppress`. **The scanner marks EVERY rule `required`**, so its
+   `required` flag is useless. `TITLE_2` (@h1@ must match @title@) is **bogus / suppress** —
+   a mislabeled best-practice with no real ADA spec (Bryan's call).
+3. **`recurrence`** (computed from data): `systematic` (site-wide → ONE template/config fix,
+   threshold ~≥20% of pages) vs `per_page` (isolated → editor action). This auto-corrects
+   borderline `cause` calls — e.g. `TITLE_2` on 74 pages self-flags as systematic.
+   Count **presence-per-page**, not raw occurrences (identifiers are non-unique per page).
+- **+ Third-party detection** via element `id`/`class` **signature map**: `SvgjsSvg*` (SVG.js),
+  `gm-*` (Google Maps) = third-party (escalate/remove, not the client's fault); bloomcu BEM
+  (`hero__`, `mega-nav__`, `btn--`) = first-party. `id`/`class` present on ~35%/27% of elements.
+
+**Why this matters (northwoods numbers):** raw "283 violations" is 91% noise — **147** were
+bogus `TITLE_2`, **111** were the third-party SVG trio (`IMAGE_8`/`LANDMARK_2`/`WIDGET_3` on
+one `SvgjsSvg` element). Real client-actionable ≈ **25 structural violations + 50 authoring
+warnings**. The report headline must be **segmented by who acts**, not a raw count:
+customer action list (**24 per-page /blog/ authoring pages**) · systematic fixes · dev/theme · third-party.
+
+**Corrections from Bryan's spot-check (must fold into the model):**
+- **Severity is a required filter.** The UI's "errors" = **violations (`V`) only**; warnings
+  (`W`) are advisory. My draft action list mixed them, so warning-only pages (Member
+  Appreciation Days 2024, 'Tis the Season — both viol=0/warn=3) wrongly showed as errors.
+  In this scanner the heading/link **authoring** rules are mostly `W`; `LINK_1`/`TITLE_2`
+  are `V`. → Customer *error* list = violations-first; warnings = separate advisory tier.
+- **Dedupe pages by URL.** 1 duplicate URL found in 121 pages (`/about/news/`, 2 page rows) —
+  likely a one-off rescan leaving a second row. Minor now, but dedupe (keep latest) and
+  investigate whether single-page rescans create duplicate rows.
+- **Export vs UI — RESOLVED (was staleness, not a counting bug).** A second export minutes
+  later matched the live UI on all spot-checked pages: 8 pages had been rescanned/fixed
+  between exports and dropped their issues (Member Appreciation & 'Tis the Season → clean;
+  Valleyfair V4→V2 as its `TITLE_2` was fixed). Confirms most-recent-per-page works
+  end-to-end — the export reflects live per-page rescan state. **Implication:** a report is a
+  point-in-time snapshot; note the scan/export timestamp on it.
+- **`TITLE_2` is NOT scanner-suppressed** — it's ~145 live violations site-wide and is
+  technically fixable (fix the h1/title). Its `tier` (suppress vs best_practice) is purely
+  Bryan's policy call, but it's the single biggest lever on the headline count.
+
+**Artifacts:** sample export at `storage/app/reports/ada-report.json` (gitignored). Ad-hoc
+analysis scripts were in the session scratchpad (ephemeral — rebuild as real code next time).
+
 ## Near-term scope (the launch-project trial)
 
 1. **[ ] P0** Classify **CMS-editable** issues vs **global/template** issues.
@@ -114,23 +164,25 @@ Prod DB is unreachable from dev (see [Plan.md](Plan.md) constraints). So:
 
 - **[x] One real page's `results` blob** — DONE (scan 22, 2026-08-20). Confirmed
   `element_identifier` = `"<tag>: <text>"` (see the format callout above).
-- **[ ] A real MULTI-PAGE scan export** — needed to validate cross-page recurrence; dev has
-  only single-page QA scans. Run `scans:export-issues <id>` on **prod** against a multi-page
-  site and paste the JSON.
-- **[ ] 1–2 example launch reports** — behind the login-protected Vue frontend, so paste as
-  text or print-to-PDF. Redact freely; only structure/tone is needed.
+- **[x] A real MULTI-PAGE scan export** — DONE (northwoods scan 1909, 262 pages,
+  `storage/app/reports/ada-report-2.json`). Recurrence validated: clear global cluster vs
+  CMS-editable tail (see PINNED block).
+- **[x] 1–2 example launch reports** — DONE: `storage/app/examples/{acadia,central,siu}.md`
+  (define the customer-report format/tone).
 
 ## Build tasks
 
-- **[ ] P0** `PageIssueFormatter` extracted from `GetPageIssuesTool` (+ tests).
-- **[ ] P0** `ScanIssuesExport` aggregate over `Page::where('scan_id', …)` (+ tests).
-- **[ ] P0** Recurrence analyzer: for each `(rule_id, element_identifier)`, count
-  **distinct pages it appears on** (presence-per-page, NOT raw occurrences — identifiers are
-  non-unique within a page) → `global | cms_editable` label + pages-affected count (+ tests).
-- **[ ] P0** Rule map seeded from the trial scan's distinct `rule_id`s (doc_url + tiebreaker).
-- **[ ] P0** `scans:export-issues {scan}` command → scorecard JSON.
-- **[ ] P1** Report generator (example reports + scorecard → prose).
-- **[ ] P1** Refactor `GetPageIssuesTool` onto the shared core.
+- **[x] P0** `PageIssueFormatter` — shipped (uncapped default; opt-in cap for MCP).
+- **[x] P0** `ScanIssuesExport` aggregate over `Page::where('scan_id', …)` — shipped.
+- **[x] P0** `scans:export-issues {scan}` command — shipped (+ dashboard download endpoint).
+- **[ ] P0** Recurrence analyzer: for each `(rule_id, element_identifier)`, count **distinct
+  pages** (presence-per-page, NOT raw occurrences) → `global | cms_editable` + pages affected.
+  *(Prototyped in scratchpad scripts; needs to become real code.)*
+- **[ ] P0** Rule map: `rule_id → {cause, tier, owner, doc_url}` + the severity (V/W) filter.
+  Seed = Bryan's annotations in `storage/app/reports/northwoods-grouped-annotated.txt`.
+- **[ ] P1** Report generator (example reports + classified export → prose). *(Done once by
+  hand for northwoods — `northwoods-report.md` + `-elisha-punchlist.md`; not automated.)*
+- **[ ] P1** Refactor `GetPageIssuesTool` onto the shared core (deferred; stashed on `mcp`).
 
 ## Open questions
 
