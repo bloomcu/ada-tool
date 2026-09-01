@@ -20,19 +20,18 @@ class BackfillCustomerReviewable extends Command
      */
     protected $signature = 'pages:backfill-reviewable
         {--scan= : Limit to a single scan id}
-        {--chunk=200 : Rows per DB round-trip}';
+        {--chunk=500 : How many ids to stream per batch (ids only — results are read one page at a time)}';
 
     /**
      * @var string
      */
-    protected $description = "Backfill pages.customer_reviewable from stored results (resumable, chunked).";
+    protected $description = "Backfill pages.customer_reviewable from stored results (resumable).";
 
     public function handle(): int
     {
         $query = Page::query()
             ->whereNull('customer_reviewable')
-            ->when($this->option('scan'), fn ($q, $scanId) => $q->where('scan_id', $scanId))
-            ->select('id', 'results');
+            ->when($this->option('scan'), fn ($q, $scanId) => $q->where('scan_id', $scanId));
 
         $total = (clone $query)->count();
         if ($total === 0) {
@@ -44,14 +43,19 @@ class BackfillCustomerReviewable extends Command
         $this->info("Backfilling {$total} page(s)…");
         $bar = $this->output->createProgressBar($total);
 
-        $query->chunkById((int) $this->option('chunk'), function ($pages) use ($bar) {
-            foreach ($pages as $page) {
-                $results = is_array($page->results) ? $page->results : [];
-                DB::table('pages')->where('id', $page->id)->update([
-                    'customer_reviewable' => CustomerEditableRules::reviewable($results),
-                ]);
-                $bar->advance();
-            }
+        // Stream ID-ONLY rows (tiny) and read each page's large `results` blob ONE AT A TIME.
+        // Peak memory is a single page's results — never a whole chunk of blobs (which is what
+        // OOM'd a full-blob chunkById on big scans).
+        $query->select('id')->lazyById((int) $this->option('chunk'))->each(function ($page) use ($bar) {
+            $raw = DB::table('pages')->where('id', $page->id)->value('results');
+            $results = json_decode($raw ?? '', true);
+
+            DB::table('pages')->where('id', $page->id)->update([
+                'customer_reviewable' => is_array($results) ? CustomerEditableRules::reviewable($results) : false,
+            ]);
+
+            unset($raw, $results);
+            $bar->advance();
         });
 
         $bar->finish();
