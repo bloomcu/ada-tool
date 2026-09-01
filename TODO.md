@@ -54,6 +54,22 @@ Apify runs are **billable** — treat these as costly side effects.
 
 ## Backlog
 
+### Harden scan import for autonomous / unattended runs (deferred)
+Scan *starting* is already automated and running each quarter without issue
+(`scans:run-scheduled`, hourly, `onOneServer`+`withoutOverlapping`). But **import is still a
+synchronous, frontend-triggered web request** — `ScanImportController@import` runs in
+PHP-FPM, kicked off by the UI polling scan status. No queued job auto-imports a completed
+scan. Fine while imports are interactive; the risk shows up only when the autonomous cadence
+scales (no human/frontend present, and concurrent imports multiply the per-import memory —
+the same OOM class the backfill hit). A single import already chunks the dataset (20/batch),
+so the exposure is **concurrency**, not one import.
+- [ ] Move `import()` into a queued Job (`ShouldQueue`); `QUEUE_CONNECTION` is already `database`.
+- [ ] Auto-trigger: a scheduled poller dispatches the import job when an Apify run reports
+  complete, replacing the frontend trigger.
+- [ ] Bound concurrency: a dedicated import queue with a small worker count (or
+  `WithoutOverlapping` per scan / a throttled `Bus::batch`) so a quarter's sites drain at a
+  controlled rate instead of all at once.
+
 ### Open bugs (found while writing the test suite)
 - [ ] **Scan POST response omits `status`.** `SiteScanController@store` returns the
   unrefreshed model, so the DB default (`'READY'`) isn't in the JSON (the row has it).
