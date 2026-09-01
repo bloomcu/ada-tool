@@ -26,6 +26,14 @@ text" — in real scans it's the site-wide notice banner / Google Maps controls,
 warning count, so flagged pages float to the top of a scan's page list. (MySQL sorts NULL
 last on DESC, so not-yet-backfilled pages sink to the bottom.)
 
+## Per-issue flag (page detail)
+`PageController@show` runs `CustomerEditableRules::annotate($results)`, which tags each
+`rule_results` entry with its own `customer_reviewable` flag (a *failing* customer-editable
+rule) and **floats the flagged issues to the top** of the page's issue list. This is
+**derived on read** — it's a single page per request, so there's no persistence and nothing
+to keep in sync (unlike the page-level column). The sort is stable, so non-flagged issues
+keep their original scanner order.
+
 ## Backfill command
 The migration adds the **column only** — it does *not* backfill, because decoding every
 page's ~117 KB `results` inline would make the deploy migration a memory / time hazard.
@@ -62,4 +70,6 @@ Delete, in one PR:
 - the two `customer_reviewable => CustomerEditableRules::reviewable(...)` lines in
   `ScanImportController` (`import` + `importPage`)
 - the `customer_reviewable` entry in `ScanResource`'s `select()` and its `orderBy()`
+- the `CustomerEditableRules::annotate()` call in `PageController@show` (revert to returning
+  the raw page)
 - a migration to drop the `pages.customer_reviewable` column
