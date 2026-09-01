@@ -45,6 +45,30 @@ class PageControllerTest extends TestCase
     }
 
     /** @test */
+    public function it_flags_customer_editable_issues_and_floats_them_to_the_top()
+    {
+        $organization = Organization::factory()->create();
+        $site = Site::factory()->create(['organization_id' => $organization->id]);
+        $scan = Scan::factory()->create(['organization_id' => $organization->id, 'site_id' => $site->id]);
+        $page = Page::factory()->create([
+            'scan_id' => $scan->id,
+            'results' => json_encode(['rule_results' => [
+                // Structural, MORE violations — not flagged, sinks below the editable one.
+                ['rule_id' => 'WIDGET_3', 'elements_violation' => 9, 'elements_warning' => 0],
+                // CMS-editable, only a warning — flagged and floated to the top.
+                ['rule_id' => 'HEADING_5', 'elements_violation' => 0, 'elements_warning' => 2],
+            ]]),
+        ]);
+
+        $this->getJson("/api/{$organization->slug}/scans/{$scan->id}/pages/{$page->id}")
+            ->assertOk()
+            ->assertJsonPath('data.results.rule_results.0.rule_id', 'HEADING_5')
+            ->assertJsonPath('data.results.rule_results.0.customer_reviewable', true)
+            ->assertJsonPath('data.results.rule_results.1.rule_id', 'WIDGET_3')
+            ->assertJsonPath('data.results.rule_results.1.customer_reviewable', false);
+    }
+
+    /** @test */
     public function it_does_not_resolve_a_page_from_a_different_scan()
     {
         [$organization, $scan, $page] = $this->chain();

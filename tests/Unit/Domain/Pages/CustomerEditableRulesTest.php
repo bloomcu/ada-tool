@@ -45,4 +45,26 @@ class CustomerEditableRulesTest extends TestCase
         $this->assertFalse(CustomerEditableRules::reviewable([]));
         $this->assertFalse(CustomerEditableRules::reviewable(['rule_results' => [null, 'garbage']]));
     }
+
+    /** @test */
+    public function annotate_flags_failing_editable_rules_and_floats_them_first()
+    {
+        $out = CustomerEditableRules::annotate(['rule_results' => [
+            ['rule_id' => 'WIDGET_3', 'elements_violation' => 5, 'elements_warning' => 0],  // structural
+            ['rule_id' => 'HEADING_5', 'elements_violation' => 0, 'elements_warning' => 1], // editable, failing
+            ['rule_id' => 'LINK_1', 'elements_violation' => 0, 'elements_warning' => 0],     // editable but passing
+        ]]);
+
+        $rules = $out['rule_results'];
+
+        // Editable + failing floats to the top and is flagged.
+        $this->assertSame('HEADING_5', $rules[0]['rule_id']);
+        $this->assertTrue($rules[0]['customer_reviewable']);
+
+        // Everything else keeps original order (stable sort) and is not flagged
+        // (structural, and a passing editable rule).
+        $this->assertSame(['WIDGET_3', 'LINK_1'], [$rules[1]['rule_id'], $rules[2]['rule_id']]);
+        $this->assertFalse($rules[1]['customer_reviewable']);
+        $this->assertFalse($rules[2]['customer_reviewable']);
+    }
 }
