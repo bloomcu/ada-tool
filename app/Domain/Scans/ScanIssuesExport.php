@@ -4,6 +4,7 @@ namespace DDD\Domain\Scans;
 
 use DDD\Domain\Pages\Page;
 use DDD\Domain\Pages\PageIssueFormatter;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Aggregates a scan's most-recent page results into a single trimmed, LLM-parsible
@@ -18,8 +19,9 @@ use DDD\Domain\Pages\PageIssueFormatter;
 class ScanIssuesExport
 {
     /**
-     * Pages processed per DB round-trip. A page's raw `results` blob is ~117 KB, so
-     * chunking bounds peak memory — we never hold a whole large scan at once.
+     * Ids streamed per `lazyById` batch. We select only small columns here (never the
+     * ~117 KB `results` blob) and read each page's results one at a time — so neither
+     * MySQL's sort buffer nor PHP ever holds a whole scan's blobs.
      */
     private const CHUNK = 100;
 
@@ -36,20 +38,23 @@ class ScanIssuesExport
     {
         $pagesTotal = $scan->pages()->count();
 
-        // Do NOT `ORDER BY violation_count` in SQL: with `SELECT *` that pulls the
-        // large `results` TEXT column into MySQL's filesort, which overflows the sort
-        // buffer on big scans (SQLSTATE[HY001] 1038 "Out of sort memory"). chunkById()
-        // pages by the primary key (indexed, no filesort) and bounds memory; we order
-        // worst-first in PHP afterwards.
+        // The ~117 KB `results` TEXT column must NEVER appear in a sorted/paged query:
+        // MySQL's filesort packs whole rows into the sort buffer and overflows it on big
+        // scans (SQLSTATE[HY001] 1038 "Out of sort memory"). So stream only small columns
+        // ordered by the indexed primary key via lazyById(), and read each page's results
+        // ONE AT A TIME as a point lookup (no sort). Worst-first ordering happens in PHP
+        // afterwards on the trimmed (small) data.
         $exportedPages = [];
         $scan->pages()
-            ->select('id', 'title', 'violation_count', 'warning_count', 'results')
-            ->chunkById(self::CHUNK, function ($pages) use (&$exportedPages): void {
-                foreach ($pages as $page) {
-                    $exported = $this->exportPage($page);
-                    if ($exported['issue_count'] > 0) {
-                        $exportedPages[] = $exported;
-                    }
+            ->select('id', 'title', 'violation_count', 'warning_count')
+            ->lazyById(self::CHUNK)
+            ->each(function (Page $page) use (&$exportedPages): void {
+                $raw = DB::table('pages')->where('id', $page->id)->value('results');
+                $decoded = json_decode($raw ?? '', true);
+
+                $exported = $this->exportPage($page, is_array($decoded) ? $decoded : []);
+                if ($exported['issue_count'] > 0) {
+                    $exportedPages[] = $exported;
                 }
             });
 
@@ -79,9 +84,12 @@ class ScanIssuesExport
      *
      * @return array<string, mixed>
      */
-    private function exportPage(Page $page): array
+    /**
+     * @param  array<string, mixed>  $results  Decoded `page.results` (fetched separately so the
+     *                                          blob never rides along in a sorted/paged query).
+     */
+    private function exportPage(Page $page, array $results): array
     {
-        $results = is_array($page->results) ? $page->results : [];
         $formatted = $this->formatter->format($results);
 
         return [
